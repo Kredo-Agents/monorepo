@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "noEmit": true,
+    "module": "ESNext",
+    "strict": true,
+    "lib": ["esnext", "dom", "dom.iterable"],
+    "jsx": "preserve",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "allowImportingTsExtensions": true,
+    "moduleResolution": "bundler",
+    "baseUrl": ".",
+    "types": ["node"],
+    "paths": {
+      "@/*": ["./apps/client/src/*"],
+      "@shared/*": ["./packages/shared/*"],
+      "@db/*": ["./packages/db/*"]
+    }
+  }
+}

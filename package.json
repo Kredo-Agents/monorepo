@@ -1,0 +1,22 @@
+{
+  "name": "kredo",
+  "version": "1.0.0",
+  "type": "module",
+  "license": "MIT",
+  "private": true,
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "dev": "bun --filter @kredo/server dev",
+    "dev:client": "bun --filter @kredo/client dev",
+    "build": "bun --filter @kredo/client build && bun --filter @kredo/server build",
+    "start": "bun --filter @kredo/server start",
+    "check": "bun --filter @kredo/client check && bun --filter @kredo/server check",
+    "format": "prettier --write .",
+    "test": "bun --filter @kredo/server test",
+    "db:push": "bun --filter @kredo/server db:push"
+  },
+  "devDependencies": {
+    "@types/node": "^25.2.1",
+    "prettier": "^3.6.2"
+  }
+}
