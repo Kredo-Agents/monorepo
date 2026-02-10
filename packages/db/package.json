@@ -1,0 +1,26 @@
+{
+  "name": "@kredo/db",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "dotenv-vault": "^1.27.0",
+    "drizzle-orm": "^0.45.1",
+    "mysql2": "^3.16.3",
+    "require-env-variable": "^4.0.2"
+  },
+  "devDependencies": {
+    "drizzle-kit": "^0.31.4"
+  },
+  "scripts": {
+    "reset": "bun src/reset-db.ts",
+    "generate": "drizzle-kit generate",
+    "push": "drizzle-kit push",
+    "studio": "drizzle-kit studio",
+    "migrate": "bun src/migrate.ts",
+    "migrate:dev": "dotenv -e .env.development -- bun run migrate",
+    "env": "dotenv-vault pull development",
+    "typecheck": "bun tsc --noEmit",
+    "clean": "rm -rf dist .turbo node_modules"
+  }
+}
