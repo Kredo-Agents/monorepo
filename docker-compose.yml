@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  # MySQL Database
+  db:
+    image: mysql:8.0
+    container_name: kredo-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-kredo_root_pass}
+      MYSQL_DATABASE: ${DB_NAME:-kredo}
+      MYSQL_USER: ${DB_USER:-kredo}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-kredo_pass}
+    volumes:
+      - db_data:/var/lib/mysql
+    ports:
+      - "${DB_PORT:-3306}:3306"
+    networks:
+      - kredo-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Kredo Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: kredo-app
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: mysql://${DB_USER:-kredo}:${DB_PASSWORD:-kredo_pass}@db:3306/${DB_NAME:-kredo}
+      JWT_SECRET: ${JWT_SECRET:-change_this_secret_in_production}
+      PORT: ${APP_PORT:-3000}
+      # Manus OAuth (optional, for authentication)
+      CLERK_SECRET_KEY: ${CLERK_SECRET_KEY:-}
+      VITE_CLERK_PUBLISHABLE_KEY: ${VITE_CLERK_PUBLISHABLE_KEY:-}
+      OWNER_OPEN_ID: ${OWNER_OPEN_ID:-}
+      OWNER_NAME: ${OWNER_NAME:-}
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - kredo-network
+    volumes:
+      - ./data:/app/data
+
+volumes:
+  db_data:
+    driver: local
+
+networks:
+  kredo-network:
+    driver: bridge
