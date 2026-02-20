@@ -108,6 +108,6 @@ Kredo is released under the [MIT License](./LICENSE).
 
 **We welcome collaboration.**
 
-WeChat: `huhurun2022` | [GitHub Issues](https://github.com/Kredo-Agents/monorepo/issues) | [Discussions](https://github.com/Kredo-Agents/monorepo/discussions)
+Telegram: `[mansingxbt](https://t.me/mansingxbt)` | [GitHub Issues](https://github.com/Kredo-Agents/monorepo/issues) | [Discussions](https://github.com/Kredo-Agents/monorepo/discussions)
 
 ---
