@@ -2,9 +2,30 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { trpc } from '@/lib/trpc';
-import { Bot, Send, User } from 'lucide-react';
+import { Bot, Send, User, ArrowUp, ChevronDown, Coins } from 'lucide-react';
 import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import UserAvatar from '@/components/auth/UserAvatar';
+import Link from 'next/link';
+
+function ModelSelector() {
+  return (
+    <button
+      type="button"
+      className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800/70 transition-colors"
+    >
+      Claude Opus 4.6
+      <ChevronDown className="h-3.5 w-3.5 text-zinc-400" aria-hidden="true" />
+    </button>
+  );
+}
+
+const suggestionChips = [
+  { label: 'Say hello', prompt: 'Hello! What can you do?' },
+  { label: 'Set your persona', prompt: 'I want to configure your personality. ' },
+  { label: 'Ask a question', prompt: '' },
+  { label: 'Explore skills', prompt: 'What skills do you have installed?' },
+];
 
 type ChatMessage = {
   id: string;
@@ -51,6 +72,7 @@ export default function DashboardPage() {
     { enabled: Boolean(activeInstance) }
   );
   const utils = trpc.useUtils();
+  const { data: balanceData } = trpc.credits.balance.useQuery();
   const sendChatMutation = trpc.chat.send.useMutation();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
@@ -154,16 +176,89 @@ export default function DashboardPage() {
     void handleSend();
   };
 
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const showWelcome = !isLoading && activeInstance && messages.length === 0;
+
+  if (showWelcome) {
+    return (
+      <div className="h-screen flex flex-col items-center justify-center px-6 animate-fade-in">
+        <div className="absolute top-4 left-4">
+          <ModelSelector />
+        </div>
+        <div className="absolute top-4 right-4 flex items-center gap-3">
+          <Link
+            href="/dashboard/credits"
+            className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800/70 transition-colors"
+          >
+            <Coins className="h-3.5 w-3.5" aria-hidden="true" />
+            {balanceData?.displayCredits ?? '—'}
+          </Link>
+          <UserAvatar size="sm" />
+        </div>
+        <h1 className="text-4xl md:text-5xl font-light text-zinc-400 dark:text-zinc-500 mb-10 text-center">
+          Say hello to your agent
+        </h1>
+
+        <div className="w-full max-w-2xl rounded-2xl border border-zinc-200/70 dark:border-zinc-800/70 bg-white dark:bg-zinc-900/60 shadow-sm px-4 py-3">
+          <textarea
+            ref={textareaRef}
+            value={inputValue}
+            onChange={(event) => setInputValue(event.target.value)}
+            onKeyDown={handleInputKeyDown}
+            placeholder="Send a message to your agent..."
+            rows={2}
+            className="w-full resize-none bg-transparent text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none placeholder:text-zinc-400 dark:placeholder:text-zinc-600"
+            disabled={!activeInstance || isSending}
+          />
+          <div className="flex items-center justify-end pt-1">
+            <button
+              onClick={handleSend}
+              disabled={!canSend}
+              className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-zinc-900 text-white hover:bg-zinc-700 disabled:opacity-30 disabled:cursor-not-allowed dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200 transition-colors"
+              aria-label="Send message"
+            >
+              <ArrowUp className="h-4 w-4" aria-hidden="true" />
+            </button>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-center gap-2 mt-6">
+          {suggestionChips.map((chip) => (
+            <button
+              key={chip.label}
+              type="button"
+              onClick={() => {
+                setInputValue(chip.prompt);
+                textareaRef.current?.focus();
+              }}
+              className="rounded-full border border-zinc-200/70 dark:border-zinc-800/70 bg-white/60 dark:bg-zinc-900/40 px-4 py-2 text-sm text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800/70 hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors"
+            >
+              {chip.label}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="h-screen flex flex-col">
+      <div className="flex items-center justify-between px-4 py-3">
+        <ModelSelector />
+        <div className="flex items-center gap-3">
+          <Link
+            href="/dashboard/credits"
+            className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800/70 transition-colors"
+          >
+            <Coins className="h-3.5 w-3.5" aria-hidden="true" />
+            {balanceData?.displayCredits ?? '—'}
+          </Link>
+          <UserAvatar size="sm" />
+        </div>
+      </div>
       <div ref={listRef} className="flex-1 overflow-y-auto px-8 py-8 space-y-6 pb-24">
         {isLoading && (
           <div className="text-sm text-zinc-500 dark:text-zinc-400">Loading assistant...</div>
-        )}
-        {!isLoading && activeInstance && messages.length === 0 && (
-          <div className="max-w-2xl rounded-2xl border border-zinc-200/70 dark:border-zinc-800/70 bg-white/80 dark:bg-zinc-900/40 p-6 text-sm text-zinc-600 dark:text-zinc-400">
-            Say hello to your agent and start the conversation.
-          </div>
         )}
         {messages.map((message) => (
           <div

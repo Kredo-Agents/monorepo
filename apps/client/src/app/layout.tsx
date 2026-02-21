@@ -17,8 +17,15 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Kredo - AI Agent Control Center",
-  description: "Give OpenClaw a cloud-native home. One deployment, unlimited conversations across Web, Element, Slack, and more.",
+  title: "Kredo - AI Agents for the Masses",
+  description: "Powerful AI agents, built for everyone. Deploy, manage, and scale intelligent agents without the complexity.",
+  openGraph: {
+    images: [{ url: "/og-image-twitter.png" }],
+  },
+  twitter: {
+    card: "summary",
+    images: [{ url: "/og-square.png" }],
+  },
 };
 
 export default function RootLayout({

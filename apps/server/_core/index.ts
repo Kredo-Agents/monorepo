@@ -6,6 +6,7 @@ import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { startCreditBilling } from "../creditBilling";
+import { initGatewayBridge } from "../gatewayBridge";
 import { handleHelioWebhook } from "../helioWebhook";
 import { initBuiltinSkills } from "../initBuiltinSkills";
 import { validateEnv } from "./env";
@@ -47,6 +48,13 @@ async function startServer() {
     startCreditBilling();
   } catch (error) {
     console.error("[CreditBilling] Failed to start billing:", error);
+  }
+
+  // Connect to running OpenClaw gateways via WebSocket
+  try {
+    await initGatewayBridge();
+  } catch (error) {
+    console.error("[GatewayBridge] Failed to initialize:", error);
   }
 
   const app = express();

@@ -581,3 +581,23 @@ export async function getCreditTransactionById(
     .limit(1);
   return result[0];
 }
+
+export async function hasTransactionWithReference(
+  userId: number,
+  referenceId: string
+): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+
+  const result = await db
+    .select({ id: creditTransactions.id })
+    .from(creditTransactions)
+    .where(
+      and(
+        eq(creditTransactions.userId, userId),
+        eq(creditTransactions.referenceId, referenceId)
+      )
+    )
+    .limit(1);
+  return result.length > 0;
+}

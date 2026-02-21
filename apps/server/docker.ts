@@ -117,6 +117,11 @@ async function generateOpenClawConfig(
       },
     },
 
+    // Cron / scheduled tasks config
+    cron: {
+      enabled: true,
+    },
+
     // Gateway config
     gateway: {
       mode: "local",
@@ -133,6 +138,9 @@ async function generateOpenClawConfig(
       },
       port: 18789, // Container internal port fixed to 18789
       bind: "lan", // Allow host access via published port
+      controlUi: {
+        allowInsecureAuth: true,
+      },
       tailscale: {
         mode: "off",
         resetOnExit: false,
@@ -655,6 +663,53 @@ export async function restartInstance(instanceId: string) {
 /**
  * Approve Telegram pairing inside the container.
  */
+export async function execInContainer(
+  instanceId: string,
+  cmd: string[]
+): Promise<{ success: boolean; output: string; error?: string }> {
+  try {
+    const containerName = `openclaw-${instanceId}`;
+    const container = docker.getContainer(containerName);
+    const exec = await container.exec({
+      Cmd: cmd,
+      AttachStdout: true,
+      AttachStderr: true,
+      WorkingDir: "/app",
+    });
+
+    const stream = await exec.start({});
+    const stdout = new PassThrough();
+    const stderr = new PassThrough();
+    docker.modem.demuxStream(stream, stdout, stderr);
+
+    const stdoutChunks: Buffer[] = [];
+    const stderrChunks: Buffer[] = [];
+
+    stdout.on("data", (chunk) => stdoutChunks.push(Buffer.from(chunk)));
+    stderr.on("data", (chunk) => stderrChunks.push(Buffer.from(chunk)));
+
+    await new Promise<void>((resolve, reject) => {
+      stream.on("end", () => resolve());
+      stream.on("error", reject);
+    });
+
+    const inspect = await exec.inspect();
+    const output = Buffer.concat(stdoutChunks).toString("utf-8").trim();
+    const errorOutput = Buffer.concat(stderrChunks).toString("utf-8").trim();
+
+    if (inspect.ExitCode === 0) {
+      return { success: true, output };
+    }
+    return {
+      success: false,
+      output,
+      error: errorOutput || output || `Command failed with exit code ${inspect.ExitCode}`,
+    };
+  } catch (error: any) {
+    return { success: false, output: "", error: error.message };
+  }
+}
+
 export async function approveTelegramPairing(instanceId: string, code: string) {
   try {
     const containerName = `openclaw-${instanceId}`;
@@ -696,6 +751,20 @@ export async function approveTelegramPairing(instanceId: string, code: string) {
     };
   } catch (error: any) {
     return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Read the gateway auth token from an instance's config file
+ */
+export async function readGatewayToken(instanceId: string): Promise<string | null> {
+  try {
+    const configPath = path.join(INSTANCES_BASE_PATH, instanceId, "config", "openclaw.json");
+    const content = await fs.readFile(configPath, "utf-8");
+    const config = JSON.parse(content);
+    return config.gateway?.auth?.token || null;
+  } catch {
+    return null;
   }
 }
 

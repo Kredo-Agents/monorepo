@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { trpc } from "@/lib/trpc";
-import { Boxes, MessageCircle, MessageSquare, Save, Send, Slack, Trash2 } from "lucide-react";
+import { Boxes, MessageCircle, MessageSquare, Pause, Play, RotateCw, Save, Send, Slack, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function SettingsPage() {
@@ -16,11 +16,18 @@ export default function SettingsPage() {
       await utils.instances.list.invalidate();
     },
   });
+  const stopMutation = trpc.instances.stop.useMutation({
+    onSuccess: () => utils.instances.list.invalidate(),
+  });
+  const startMutation = trpc.instances.start.useMutation({
+    onSuccess: () => utils.instances.list.invalidate(),
+  });
   const deleteMutation = trpc.instances.delete.useMutation({
     onSuccess: () => {
       router.push("/setup");
     },
   });
+  const [isRestarting, setIsRestarting] = useState(false);
 
   const [config, setConfig] = useState({
     matrixEnabled: false,
@@ -58,6 +65,17 @@ export default function SettingsPage() {
     telegramBotToken: false,
     whatsappAccessToken: false,
   });
+  const statusQuery = trpc.instances.status.useQuery(
+    { id: instance?.id ?? 0 },
+    { enabled: !!instance?.id, refetchInterval: 5000 }
+  );
+  const statusData = statusQuery.data;
+  const statusOk = !(statusData && 'success' in statusData && statusData.success === false);
+  const runtimeStatus = statusOk
+    ? (statusData as any)?.openclawStatus ?? instance?.runtimeStatus ?? instance?.status
+    : instance?.runtimeStatus ?? instance?.status;
+  const isStopped = (runtimeStatus ?? instance?.status) === 'stopped' || instance?.status === 'stopped';
+
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -583,6 +601,51 @@ export default function SettingsPage() {
               >
                 <Save className="h-4 w-4" aria-hidden="true" />
                 Save Changes
+              </button>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-zinc-200/70 dark:border-zinc-800/70 bg-white dark:bg-zinc-900/40 p-6">
+            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+              Instance Controls
+            </h2>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-2">
+              Start, pause, or restart your assistant instance.
+            </p>
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={() =>
+                  isStopped
+                    ? startMutation.mutate({ id: instance!.id })
+                    : stopMutation.mutate({ id: instance!.id })
+                }
+                disabled={stopMutation.isPending || startMutation.isPending || isRestarting}
+                className="inline-flex items-center gap-2 rounded-lg border border-zinc-200/70 px-4 py-2.5 text-sm font-semibold text-zinc-700 hover:bg-zinc-100/70 disabled:opacity-50 disabled:cursor-not-allowed dark:border-zinc-800/70 dark:text-zinc-200 dark:hover:bg-zinc-800/70 transition-colors"
+              >
+                {isStopped ? (
+                  <><Play className="h-4 w-4" aria-hidden="true" />Start</>
+                ) : (
+                  <><Pause className="h-4 w-4" aria-hidden="true" />Pause</>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!instance) return;
+                  setIsRestarting(true);
+                  try {
+                    await stopMutation.mutateAsync({ id: instance.id });
+                    await startMutation.mutateAsync({ id: instance.id });
+                  } finally {
+                    setIsRestarting(false);
+                  }
+                }}
+                disabled={isRestarting || stopMutation.isPending || startMutation.isPending}
+                className="inline-flex items-center gap-2 rounded-lg border border-zinc-200/70 px-4 py-2.5 text-sm font-semibold text-zinc-700 hover:bg-zinc-100/70 disabled:opacity-50 disabled:cursor-not-allowed dark:border-zinc-800/70 dark:text-zinc-200 dark:hover:bg-zinc-800/70 transition-colors"
+              >
+                <RotateCw className="h-4 w-4" aria-hidden="true" />
+                {isRestarting ? 'Restarting…' : 'Restart'}
               </button>
             </div>
           </div>

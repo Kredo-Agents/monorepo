@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { CHAT_MESSAGE_COST, INSUFFICIENT_CREDITS_MSG } from "@shared/const";
-import { ENV } from "./_core/env";
 import * as db from "./db";
+import { readGatewayToken } from "./docker";
 
 export type ChatHistoryMessage = {
   role: "user" | "assistant" | "system";
@@ -54,23 +54,7 @@ export async function handleChatRequest({
   });
 
   // Get gateway token from config file
-  const fs = await import("fs/promises");
-  const path = await import("path");
-  const configPath = path.join(
-    ENV.instancesBasePath,
-    instanceId.toString(),
-    "config",
-    "openclaw.json"
-  );
-
-  let gatewayToken = "";
-  try {
-    const configContent = await fs.readFile(configPath, "utf-8");
-    const config = JSON.parse(configContent);
-    gatewayToken = config.gateway?.auth?.token || "";
-  } catch (err) {
-    console.error("Failed to read gateway config:", err);
-  }
+  const gatewayToken = await readGatewayToken(instanceId.toString()) ?? "";
 
   // Call OpenClaw Gateway OpenAI-compatible Chat Completions endpoint.
   const gatewayUrl = `http://localhost:${instance.port}/v1/chat/completions`;
