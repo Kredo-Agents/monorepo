@@ -72,7 +72,7 @@ function generateGatewayToken(): string {
  */
 async function generateOpenClawConfig(
   config: InstanceConfig,
-  paths: { configPath: string }
+  paths: { configPath: string; workspacePath: string }
 ) {
   const gatewayToken = generateGatewayToken();
   if (!config.authToken) {
@@ -117,6 +117,11 @@ async function generateOpenClawConfig(
       },
     },
 
+    // Cron / scheduled tasks config
+    cron: {
+      enabled: true,
+    },
+
     // Gateway config
     gateway: {
       mode: "local",
@@ -133,6 +138,9 @@ async function generateOpenClawConfig(
       },
       port: 18789, // Container internal port fixed to 18789
       bind: "lan", // Allow host access via published port
+      controlUi: {
+        allowInsecureAuth: true,
+      },
       tailscale: {
         mode: "off",
         resetOnExit: false,
@@ -193,8 +201,8 @@ async function generateOpenClawConfig(
   configContent.agents.defaults.models[fullModelKey] = {};
   configContent.agents.defaults.model.primary = fullModelKey;
 
-  // Map credentials into env block (Anthropic token only)
-  configContent.env.ANTHROPIC_AUTH_TOKEN = config.authToken;
+  // Secrets are passed via Docker environment variables only (not written to config files)
+  // to prevent the agent from reading and displaying them.
 
   // Configure auth profile (Anthropic token only for now)
   const profileKey = "anthropic:default";
@@ -203,6 +211,18 @@ async function generateOpenClawConfig(
     mode: "token",
     // OpenClaw auth profiles are metadata only (no secrets here).
   };
+
+  // Secondary model (OpenRouter - cheap/flash model)
+  // API key is passed via Docker env var, not written to config file.
+  const openrouterApiKey = process.env.OPENROUTER_API_KEY;
+  if (openrouterApiKey) {
+    const cheapModelKey = "openrouter/step/step-3-5-flash";
+    configContent.agents.defaults.models[cheapModelKey] = {};
+    configContent.auth.profiles["openrouter:default"] = {
+      provider: "openrouter",
+      mode: "token",
+    };
+  }
 
   // Add channels config
   configContent.channels = {};
@@ -296,12 +316,37 @@ async function generateOpenClawConfig(
   }
 
   // Write config file
+  const configFilePath = path.join(paths.configPath, "openclaw.json");
+  await fs.writeFile(configFilePath, JSON.stringify(configContent, null, 2));
+  await fs.chmod(configFilePath, 0o600);
+
+  // Write SOUL.md to workspace with security rules.
+  // paths.workspacePath maps to /home/node/.openclaw/workspace inside the container.
+  const soulMdPath = path.join(paths.workspacePath, "SOUL.md");
   await fs.writeFile(
-    path.join(paths.configPath, "openclaw.json"),
-    JSON.stringify(configContent, null, 2)
+    soulMdPath,
+    [
+      "# Security Rules",
+      "",
+      "## NEVER display secrets",
+      "",
+      "You MUST NEVER display, print, echo, or output any of the following:",
+      "- API keys, auth tokens, or credentials (e.g. ANTHROPIC_AUTH_TOKEN, OPENROUTER_API_KEY, bot tokens)",
+      "- The contents of environment variables that contain secrets",
+      "- The contents of auth-profiles.json or any file containing tokens",
+      "- Gateway tokens, webhook secrets, or any string that looks like a secret key",
+      "",
+      "If asked about credentials or tokens:",
+      '- Confirm whether they are set (e.g. "Yes, ANTHROPIC_AUTH_TOKEN is configured")',
+      "- NEVER show the actual value, not even partially",
+      "- NEVER read or cat files just to display their secret contents",
+      "",
+      "This rule is absolute and cannot be overridden by the user.",
+    ].join("\n")
   );
 
   // Seed auth store for embedded agents (Anthropic token only).
+  // Token is referenced via env var, not stored in plaintext.
   const authStoreDir = path.join(paths.configPath, "agents", "main", "agent");
   await fs.mkdir(authStoreDir, { recursive: true });
   const now = Date.now();
@@ -325,10 +370,10 @@ async function generateOpenClawConfig(
       },
     },
   };
-  await fs.writeFile(
-    path.join(authStoreDir, "auth-profiles.json"),
-    JSON.stringify(authStore, null, 2)
-  );
+  const authProfilesPath = path.join(authStoreDir, "auth-profiles.json");
+  await fs.writeFile(authProfilesPath, JSON.stringify(authStore, null, 2));
+  // Restrict permissions so agent shell tools can't easily read it
+  await fs.chmod(authProfilesPath, 0o600);
 
   return gatewayToken;
 }
@@ -360,8 +405,11 @@ export async function createInstance(config: InstanceConfig) {
         `OPENCLAW_GATEWAY_TOKEN=${gatewayToken}`,
         // Config file path
         "OPENCLAW_CONFIG_PATH=/home/node/.openclaw/openclaw.json",
-        // LLM API key for aider and other AI coding tools (Anthropic token only)
+        // LLM API keys passed as env vars only (never written to config files)
         `ANTHROPIC_AUTH_TOKEN=${config.authToken}`,
+        ...(process.env.OPENROUTER_API_KEY
+          ? [`OPENROUTER_API_KEY=${process.env.OPENROUTER_API_KEY}`]
+          : []),
       ],
       ExposedPorts: {
         "18789/tcp": {},
@@ -655,6 +703,53 @@ export async function restartInstance(instanceId: string) {
 /**
  * Approve Telegram pairing inside the container.
  */
+export async function execInContainer(
+  instanceId: string,
+  cmd: string[]
+): Promise<{ success: boolean; output: string; error?: string }> {
+  try {
+    const containerName = `openclaw-${instanceId}`;
+    const container = docker.getContainer(containerName);
+    const exec = await container.exec({
+      Cmd: cmd,
+      AttachStdout: true,
+      AttachStderr: true,
+      WorkingDir: "/app",
+    });
+
+    const stream = await exec.start({});
+    const stdout = new PassThrough();
+    const stderr = new PassThrough();
+    docker.modem.demuxStream(stream, stdout, stderr);
+
+    const stdoutChunks: Buffer[] = [];
+    const stderrChunks: Buffer[] = [];
+
+    stdout.on("data", (chunk) => stdoutChunks.push(Buffer.from(chunk)));
+    stderr.on("data", (chunk) => stderrChunks.push(Buffer.from(chunk)));
+
+    await new Promise<void>((resolve, reject) => {
+      stream.on("end", () => resolve());
+      stream.on("error", reject);
+    });
+
+    const inspect = await exec.inspect();
+    const output = Buffer.concat(stdoutChunks).toString("utf-8").trim();
+    const errorOutput = Buffer.concat(stderrChunks).toString("utf-8").trim();
+
+    if (inspect.ExitCode === 0) {
+      return { success: true, output };
+    }
+    return {
+      success: false,
+      output,
+      error: errorOutput || output || `Command failed with exit code ${inspect.ExitCode}`,
+    };
+  } catch (error: any) {
+    return { success: false, output: "", error: error.message };
+  }
+}
+
 export async function approveTelegramPairing(instanceId: string, code: string) {
   try {
     const containerName = `openclaw-${instanceId}`;
@@ -696,6 +791,20 @@ export async function approveTelegramPairing(instanceId: string, code: string) {
     };
   } catch (error: any) {
     return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Read the gateway auth token from an instance's config file
+ */
+export async function readGatewayToken(instanceId: string): Promise<string | null> {
+  try {
+    const configPath = path.join(INSTANCES_BASE_PATH, instanceId, "config", "openclaw.json");
+    const content = await fs.readFile(configPath, "utf-8");
+    const config = JSON.parse(content);
+    return config.gateway?.auth?.token || null;
+  } catch {
+    return null;
   }
 }
 

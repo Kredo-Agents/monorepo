@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   openclaw-instance-{{INSTANCE_ID}}:
-    image: openclaw:local
+    image: openclaw:latest
     container_name: openclaw-{{INSTANCE_ID}}
     restart: unless-stopped
     

@@ -88,7 +88,7 @@ export default function CreditsPage() {
         <div className="mb-10 rounded-xl border border-zinc-200/70 dark:border-zinc-800/70 bg-white dark:bg-zinc-900/40 p-6">
           <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50 mb-2">Buy Credits</h2>
           <p className="text-sm text-zinc-600 dark:text-zinc-400">
-            Credit purchases are not yet configured. Contact the administrator.
+            Credit purchases are not yet enabled.
           </p>
         </div>
       )}

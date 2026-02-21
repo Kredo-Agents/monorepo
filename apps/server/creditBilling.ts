@@ -1,18 +1,67 @@
-import { INSTANCE_DAILY_COST } from "@shared/const";
+import { INSTANCE_DAILY_COST, PLANS, DEFAULT_PLAN, type PlanTier } from "@shared/const";
 import * as db from "./db";
 import * as docker from "./docker";
 
 const BILLING_INTERVAL_MS = 60 * 60 * 1000; // check every hour
-const BILLING_PERIOD_MS = 24 * 60 * 60 * 1000; // bill every 24h
 
-// Track when each user was last billed (in-memory, resets on restart)
-const lastBilledMap = new Map<number, number>();
+function todaysBillingRef(): string {
+  return `billing:daily:${new Date().toISOString().split("T")[0]}`;
+}
+
+function todaysDateStr(): string {
+  return new Date().toISOString().split("T")[0]!;
+}
 
 export function startCreditBilling() {
-  console.log("[CreditBilling] Starting periodic billing loop (every 1h, bills every 24h)");
+  console.log("[CreditBilling] Starting periodic billing loop (every 1h)");
   // Run first cycle after a short delay to let the server finish starting
-  setTimeout(() => void runBillingCycle(), 10_000);
-  setInterval(() => void runBillingCycle(), BILLING_INTERVAL_MS);
+  setTimeout(async () => {
+    await runDailyRefreshCycle();
+    await runBillingCycle();
+  }, 10_000);
+  setInterval(async () => {
+    await runDailyRefreshCycle();
+    await runBillingCycle();
+  }, BILLING_INTERVAL_MS);
+}
+
+async function runDailyRefreshCycle() {
+  try {
+    const allUsers = await db.getAllUsers();
+    const todayStr = todaysDateStr();
+
+    for (const user of allUsers) {
+      // Skip if already refreshed today
+      if (user.lastDailyRefresh) {
+        const lastRefreshDate = new Date(user.lastDailyRefresh).toISOString().split("T")[0];
+        if (lastRefreshDate === todayStr) continue;
+      }
+
+      const planConfig = PLANS[(user.plan as PlanTier) || DEFAULT_PLAN] || PLANS.free;
+      const refreshTo = planConfig.dailyRefreshCredits;
+
+      // Only refresh if current credits are below the refresh target
+      if (user.credits < refreshTo) {
+        const creditsToAdd = refreshTo - user.credits;
+        const ref = `refresh:daily:${todayStr}`;
+        const alreadyRefreshed = await db.hasTransactionWithReference(user.id, ref);
+        if (!alreadyRefreshed) {
+          await db.addCredits(
+            user.id,
+            creditsToAdd,
+            "daily_refresh",
+            `Daily refresh to ${refreshTo / 10} credits (${planConfig.displayName} plan)`,
+            ref,
+          );
+          console.log(`[CreditBilling] Refreshed user ${user.id}: +${creditsToAdd} tenths to ${refreshTo}`);
+        }
+      }
+
+      await db.updateUserLastDailyRefresh(user.id, new Date());
+    }
+  } catch (error) {
+    console.error("[CreditBilling] Error in daily refresh cycle:", error);
+  }
 }
 
 async function runBillingCycle() {
@@ -30,13 +79,12 @@ async function runBillingCycle() {
       byUser.set(instance.userId, list);
     }
 
-    const now = Date.now();
+    const ref = todaysBillingRef();
 
     for (const [userId, userInstances] of byUser) {
-      const lastBilled = lastBilledMap.get(userId) || 0;
-
-      // Only bill if 24h have passed since last billing
-      if (now - lastBilled < BILLING_PERIOD_MS) continue;
+      // Check the database (not in-memory) to see if already billed today
+      const alreadyBilled = await db.hasTransactionWithReference(userId, ref);
+      if (alreadyBilled) continue;
 
       const totalCost = userInstances.length * INSTANCE_DAILY_COST;
       const userCredits = await db.getUserCredits(userId);
@@ -46,9 +94,8 @@ async function runBillingCycle() {
           userId,
           totalCost,
           `Daily instance billing (${userInstances.length} instance(s))`,
-          `billing:daily:${new Date().toISOString().split("T")[0]}`,
+          ref,
         );
-        lastBilledMap.set(userId, now);
         console.log(`[CreditBilling] Billed user ${userId}: ${totalCost} tenths for ${userInstances.length} instance(s)`);
       } else {
         // Insufficient credits — stop all running instances for this user
@@ -70,7 +117,6 @@ async function runBillingCycle() {
             `billing:daily:partial:${new Date().toISOString().split("T")[0]}`,
           );
         }
-        lastBilledMap.set(userId, now);
       }
     }
   } catch (error) {

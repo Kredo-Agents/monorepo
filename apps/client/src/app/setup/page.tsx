@@ -304,12 +304,39 @@ export default function SetupPage() {
 
   if (!isLoaded || (existingInstancesQuery.isLoading && !existingInstancesQuery.data)) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-zinc-900 dark:border-zinc-50 mx-auto mb-4"></div>
-          <p className="text-zinc-600 dark:text-zinc-400">Loading...</p>
+      <main className="min-h-screen bg-zinc-50/80 dark:bg-black py-10 sm:py-16">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 animate-pulse">
+          <div className="mb-8 sm:mb-10">
+            <div className="h-2.5 w-28 bg-zinc-200 dark:bg-zinc-800 rounded-full mb-3" />
+            <div className="h-10 w-72 bg-zinc-200 dark:bg-zinc-800 rounded-lg mb-3" />
+            <div className="h-5 w-56 bg-zinc-200 dark:bg-zinc-800 rounded-lg" />
+          </div>
+          <div className="mb-6 sm:mb-8 flex items-center justify-center gap-4 sm:gap-5">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex items-center gap-3">
+                <div className="h-7 w-7 rounded-full bg-zinc-200 dark:bg-zinc-800" />
+                <div className="h-4 w-14 bg-zinc-200 dark:bg-zinc-800 rounded" />
+                {i < 3 && <div className="hidden sm:block h-px w-8 bg-zinc-200 dark:bg-zinc-800" />}
+              </div>
+            ))}
+          </div>
+          <div className="rounded-3xl border border-zinc-200/80 dark:border-zinc-800/80 bg-white/80 dark:bg-zinc-900/70 overflow-hidden">
+            <div className="px-6 sm:px-10 py-5 border-b border-zinc-200/70 dark:border-zinc-800/70 bg-zinc-50/70 dark:bg-zinc-900/50">
+              <div className="h-2.5 w-16 bg-zinc-200 dark:bg-zinc-800 rounded mb-2.5" />
+              <div className="h-5 w-20 bg-zinc-200 dark:bg-zinc-800 rounded" />
+            </div>
+            <div className="p-6 sm:p-10 min-h-[380px] space-y-4">
+              <div className="h-8 w-52 bg-zinc-200 dark:bg-zinc-800 rounded" />
+              <div className="h-4 w-full max-w-sm bg-zinc-200 dark:bg-zinc-800 rounded" />
+              <div className="h-4 w-2/3 max-w-xs bg-zinc-200 dark:bg-zinc-800 rounded" />
+            </div>
+            <div className="px-6 sm:px-10 pb-6 sm:pb-10 flex justify-between">
+              <div className="h-12 w-24 bg-zinc-200 dark:bg-zinc-800 rounded-xl" />
+              <div className="h-12 w-36 bg-zinc-200 dark:bg-zinc-800 rounded-xl" />
+            </div>
+          </div>
         </div>
-      </div>
+      </main>
     );
   }
 
@@ -320,14 +347,7 @@ export default function SetupPage() {
 
   // Prevent rendering setup form while redirecting
   if (existingInstancesQuery.data && existingInstancesQuery.data.length > 0) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-zinc-900 dark:border-zinc-50 mx-auto mb-4"></div>
-          <p className="text-zinc-600 dark:text-zinc-400">Redirecting to dashboard...</p>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   const updateConfig = (updates: Partial<SetupConfig>) => {
@@ -563,17 +583,7 @@ export default function SetupPage() {
                   disabled={!canDeploy || isDeploying}
                   className="w-full sm:w-auto px-6 py-3.5 text-sm sm:text-base font-semibold text-white bg-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 rounded-xl hover:bg-zinc-800 dark:hover:bg-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isDeploying ? (
-                    <span className="flex items-center gap-2">
-                      <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                      </svg>
-                      Deploying...
-                    </span>
-                  ) : (
-                    'Deploy Instance'
-                  )}
+                  {isDeploying ? 'Deploying…' : 'Deploy Instance'}
                 </button>
               )}
             </div>
@@ -700,7 +710,7 @@ function Step3Platforms({
       {selectedPlatform && !showDetails ? (
         <div className="rounded-2xl border border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 p-6 text-center space-y-2">
           <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400">
-            Great — press Continue to view the setup steps for{' '}
+            Great, press Continue to view the setup steps for{' '}
             <span className="font-semibold text-zinc-900 dark:text-zinc-100">
               {platforms.find((platform) => platform.id === selectedPlatform)?.name}
             </span>
@@ -993,11 +1003,10 @@ function Step4Review({
 
       {isDeploying && !isReady ? (
         <div className="text-center py-10 sm:py-16">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-zinc-100 dark:bg-zinc-900 mb-4">
-            <svg className="animate-spin h-7 w-7 text-zinc-700 dark:text-zinc-300" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-            </svg>
+          <div className="flex items-center justify-center gap-1.5 mb-6">
+            <span className="h-2 w-2 rounded-full bg-zinc-400 dark:bg-zinc-500 animate-bounce [animation-delay:-0.3s]" />
+            <span className="h-2 w-2 rounded-full bg-zinc-400 dark:bg-zinc-500 animate-bounce [animation-delay:-0.15s]" />
+            <span className="h-2 w-2 rounded-full bg-zinc-400 dark:bg-zinc-500 animate-bounce" />
           </div>
           <h3 className="text-xl sm:text-2xl font-semibold text-zinc-900 dark:text-zinc-50 mb-2">Starting your OpenClaw instance…</h3>
           <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400">
@@ -1143,7 +1152,7 @@ function Step5Pairing({
               />
             </div>
             <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 text-center">
-              Paste your code or type it — we’ll auto-format.
+              Paste your code or type it. We’ll auto-format.
             </p>
             <div className="flex flex-col items-center gap-3">
               <button
