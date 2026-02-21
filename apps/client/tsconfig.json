@@ -20,7 +20,9 @@
     ],
     "paths": {
       "@/*": ["./src/*"],
-      "@openclaw/server/*": ["../server/*"]
+      "@openclaw/server/*": ["../server/*"],
+      "@shared/*": ["../../packages/shared/*"],
+      "@db/*": ["../../packages/db/*"]
     }
   },
   "include": [
