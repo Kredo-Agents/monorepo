@@ -316,10 +316,10 @@ async function generateOpenClawConfig(
     };
   }
 
-  // Write config file
+  // Write config file (0o644 so the host kredo server can read the gateway token)
   const configFilePath = path.join(paths.configPath, "openclaw.json");
   await fs.writeFile(configFilePath, JSON.stringify(configContent, null, 2));
-  await fs.chmod(configFilePath, 0o600);
+  await fs.chmod(configFilePath, 0o644);
 
   // Write SOUL.md to workspace with security rules.
   // paths.workspacePath maps to /home/node/.openclaw/workspace inside the container.
