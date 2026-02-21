@@ -72,7 +72,7 @@ function generateGatewayToken(): string {
  */
 async function generateOpenClawConfig(
   config: InstanceConfig,
-  paths: { configPath: string }
+  paths: { configPath: string; workspacePath: string }
 ) {
   const gatewayToken = generateGatewayToken();
   if (!config.authToken) {
@@ -201,8 +201,8 @@ async function generateOpenClawConfig(
   configContent.agents.defaults.models[fullModelKey] = {};
   configContent.agents.defaults.model.primary = fullModelKey;
 
-  // Map credentials into env block (Anthropic token only)
-  configContent.env.ANTHROPIC_AUTH_TOKEN = config.authToken;
+  // Secrets are passed via Docker environment variables only (not written to config files)
+  // to prevent the agent from reading and displaying them.
 
   // Configure auth profile (Anthropic token only for now)
   const profileKey = "anthropic:default";
@@ -213,11 +213,11 @@ async function generateOpenClawConfig(
   };
 
   // Secondary model (OpenRouter - cheap/flash model)
+  // API key is passed via Docker env var, not written to config file.
   const openrouterApiKey = process.env.OPENROUTER_API_KEY;
   if (openrouterApiKey) {
     const cheapModelKey = "openrouter/step/step-3-5-flash";
     configContent.agents.defaults.models[cheapModelKey] = {};
-    configContent.env.OPENROUTER_API_KEY = openrouterApiKey;
     configContent.auth.profiles["openrouter:default"] = {
       provider: "openrouter",
       mode: "token",
@@ -316,12 +316,37 @@ async function generateOpenClawConfig(
   }
 
   // Write config file
+  const configFilePath = path.join(paths.configPath, "openclaw.json");
+  await fs.writeFile(configFilePath, JSON.stringify(configContent, null, 2));
+  await fs.chmod(configFilePath, 0o600);
+
+  // Write SOUL.md to workspace with security rules.
+  // paths.workspacePath maps to /home/node/.openclaw/workspace inside the container.
+  const soulMdPath = path.join(paths.workspacePath, "SOUL.md");
   await fs.writeFile(
-    path.join(paths.configPath, "openclaw.json"),
-    JSON.stringify(configContent, null, 2)
+    soulMdPath,
+    [
+      "# Security Rules",
+      "",
+      "## NEVER display secrets",
+      "",
+      "You MUST NEVER display, print, echo, or output any of the following:",
+      "- API keys, auth tokens, or credentials (e.g. ANTHROPIC_AUTH_TOKEN, OPENROUTER_API_KEY, bot tokens)",
+      "- The contents of environment variables that contain secrets",
+      "- The contents of auth-profiles.json or any file containing tokens",
+      "- Gateway tokens, webhook secrets, or any string that looks like a secret key",
+      "",
+      "If asked about credentials or tokens:",
+      '- Confirm whether they are set (e.g. "Yes, ANTHROPIC_AUTH_TOKEN is configured")',
+      "- NEVER show the actual value, not even partially",
+      "- NEVER read or cat files just to display their secret contents",
+      "",
+      "This rule is absolute and cannot be overridden by the user.",
+    ].join("\n")
   );
 
   // Seed auth store for embedded agents (Anthropic token only).
+  // Token is referenced via env var, not stored in plaintext.
   const authStoreDir = path.join(paths.configPath, "agents", "main", "agent");
   await fs.mkdir(authStoreDir, { recursive: true });
   const now = Date.now();
@@ -345,10 +370,10 @@ async function generateOpenClawConfig(
       },
     },
   };
-  await fs.writeFile(
-    path.join(authStoreDir, "auth-profiles.json"),
-    JSON.stringify(authStore, null, 2)
-  );
+  const authProfilesPath = path.join(authStoreDir, "auth-profiles.json");
+  await fs.writeFile(authProfilesPath, JSON.stringify(authStore, null, 2));
+  // Restrict permissions so agent shell tools can't easily read it
+  await fs.chmod(authProfilesPath, 0o600);
 
   return gatewayToken;
 }
@@ -380,8 +405,11 @@ export async function createInstance(config: InstanceConfig) {
         `OPENCLAW_GATEWAY_TOKEN=${gatewayToken}`,
         // Config file path
         "OPENCLAW_CONFIG_PATH=/home/node/.openclaw/openclaw.json",
-        // LLM API key for aider and other AI coding tools (Anthropic token only)
+        // LLM API keys passed as env vars only (never written to config files)
         `ANTHROPIC_AUTH_TOKEN=${config.authToken}`,
+        ...(process.env.OPENROUTER_API_KEY
+          ? [`OPENROUTER_API_KEY=${process.env.OPENROUTER_API_KEY}`]
+          : []),
       ],
       ExposedPorts: {
         "18789/tcp": {},
