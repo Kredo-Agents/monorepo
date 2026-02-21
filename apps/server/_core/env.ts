@@ -10,6 +10,8 @@ export const ENV = {
     process.env.OPENCLAW_INSTANCES_PATH ??
     `${os.homedir()}/openclaw-instances`,
   clerkSecretKey: process.env.CLERK_SECRET_KEY ?? "",
+  // OpenRouter API key for cheap/flash model (optional)
+  openrouterApiKey: process.env.OPENROUTER_API_KEY ?? "",
   // Helio / MoonPay Commerce payment integration (optional)
   helioApiKey: process.env.HELIO_API_KEY ?? "",
   helioWebhookSecret: process.env.HELIO_WEBHOOK_SECRET ?? "",

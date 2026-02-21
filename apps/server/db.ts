@@ -2,6 +2,7 @@ import { eq, and, desc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   InsertUser,
+  User,
   users,
   instances,
   Instance,
@@ -578,6 +579,51 @@ export async function getCreditTransactionById(
     .select()
     .from(creditTransactions)
     .where(and(eq(creditTransactions.id, id), eq(creditTransactions.userId, userId)))
+    .limit(1);
+  return result[0];
+}
+
+export async function hasTransactionWithReference(
+  userId: number,
+  referenceId: string
+): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+
+  const result = await db
+    .select({ id: creditTransactions.id })
+    .from(creditTransactions)
+    .where(
+      and(
+        eq(creditTransactions.userId, userId),
+        eq(creditTransactions.referenceId, referenceId)
+      )
+    )
+    .limit(1);
+  return result.length > 0;
+}
+
+// ===== Plan & Refresh Functions =====
+
+export async function getAllUsers(): Promise<User[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(users);
+}
+
+export async function updateUserLastDailyRefresh(userId: number, date: Date): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(users).set({ lastDailyRefresh: date }).where(eq(users.id, userId));
+}
+
+export async function getUserWithPlan(userId: number): Promise<{ credits: number; plan: string } | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db
+    .select({ credits: users.credits, plan: users.plan })
+    .from(users)
+    .where(eq(users.id, userId))
     .limit(1);
   return result[0];
 }

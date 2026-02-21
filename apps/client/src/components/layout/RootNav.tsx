@@ -2,6 +2,7 @@
 
 import { useAuth, useClerk } from "@clerk/nextjs";
 import { usePathname } from "next/navigation";
+import Image from "next/image";
 import UserAvatar from "@/components/auth/UserAvatar";
 
 export default function RootNav() {
@@ -16,16 +17,11 @@ export default function RootNav() {
   return (
     <nav className="border-b border-zinc-200 dark:border-zinc-800">
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-        <div className="text-xl font-bold text-zinc-900 dark:text-zinc-50">
-          Kredo
+        <div className="flex items-end gap-2">
+          <Image src="/logo-footer.png" alt="Kredo" width={120} height={40} className="h-8 w-auto" />
+          <span className="text-xl font-bold text-zinc-900 dark:text-zinc-50">Kredo</span>
         </div>
         <div className="flex items-center gap-6 text-sm">
-          <a
-            href="/insight"
-            className="text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors font-medium"
-          >
-            Business Insight
-          </a>
           {isSignedIn ? (
             <UserAvatar size="md" dropdownPosition="down" />
           ) : (

@@ -1,4 +1,4 @@
-import { COOKIE_NAME, INSTANCE_DAILY_COST, CREDIT_DIVISOR } from "@shared/const";
+import { COOKIE_NAME, INSTANCE_DAILY_COST, CREDIT_DIVISOR, PLANS, DEFAULT_PLAN, type PlanTier } from "@shared/const";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getSessionCookieOptions } from "./_core/cookies";
@@ -6,9 +6,11 @@ import { ENV } from "./_core/env";
 import { systemRouter } from "./_core/systemRouter";
 import { adminProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { handleChatRequest } from "./chat";
+import * as cron from "./cron";
 import * as db from "./db";
 import { syncSkills } from "./skillsSync";
 import * as docker from "./docker";
+import * as gatewayBridge from "./gatewayBridge";
 
 const BASE_INSTANCE_PORT = 18790;
 
@@ -225,6 +227,16 @@ export const appRouter = router({
             }
 
             await db.updateInstance(instance.id, { status: "running" });
+
+            // Schedule WS pairing with the gateway (non-blocking)
+            if (dockerResult.gatewayToken) {
+              gatewayBridge.scheduleConnect(
+                instance.id.toString(),
+                nextPort,
+                dockerResult.gatewayToken,
+              );
+            }
+
             return instance;
           } catch (error) {
             lastError = error instanceof Error ? error.message : String(error);
@@ -297,7 +309,8 @@ export const appRouter = router({
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => {
         await getOwnedInstanceOrThrow(input.id, ctx.user.id);
-        // Delete Docker container first
+        // Disconnect WS bridge, then delete Docker container
+        gatewayBridge.disconnectGateway(input.id.toString());
         await docker.deleteInstance(input.id.toString());
         // Then delete from database
         await db.deleteInstance(input.id);
@@ -352,6 +365,16 @@ export const appRouter = router({
         const result = await docker.startInstance(instance.id.toString(), instanceConfig);
         if (result.success) {
           await db.updateInstance(input.id, { status: "running" });
+
+          // Schedule WS pairing with the gateway (non-blocking)
+          const token = await docker.readGatewayToken(instance.id.toString());
+          if (token && instance.port) {
+            gatewayBridge.scheduleConnect(
+              instance.id.toString(),
+              instance.port,
+              token,
+            );
+          }
         }
         return result;
       }),
@@ -360,6 +383,7 @@ export const appRouter = router({
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => {
         await getOwnedInstanceOrThrow(input.id, ctx.user.id);
+        gatewayBridge.disconnectGateway(input.id.toString());
         const result = await docker.stopInstance(input.id.toString());
         if (result.success) {
           await db.updateInstance(input.id, { status: "stopped" });
@@ -379,6 +403,8 @@ export const appRouter = router({
           };
         }
 
+        const wsStatus = gatewayBridge.getConnectionStatus(input.id.toString());
+
         if (instance.port && runtime.running) {
           const gateway = await docker.getGatewayStatus(instance.port);
           return {
@@ -387,6 +413,8 @@ export const appRouter = router({
             gatewayStatus: gateway.status,
             openclawReady: Boolean(gateway.ready),
             openclawStatus: gateway.ready ? "ready" : runtime.openclawStatus,
+            wsPaired: wsStatus?.state === "connected",
+            wsState: wsStatus?.state ?? null,
           };
         }
 
@@ -429,6 +457,7 @@ export const appRouter = router({
       .input(z.object({
         instanceId: z.number(),
         message: z.string(),
+        model: z.enum(["premium", "cheap"]).optional().default("premium"),
         history: z.array(
           z.object({
             role: z.enum(["user", "assistant", "system"]),
@@ -442,6 +471,7 @@ export const appRouter = router({
           instanceId: input.instanceId,
           message: input.message,
           history: input.history,
+          model: input.model,
         });
       }),
   }),
@@ -827,6 +857,22 @@ export const appRouter = router({
       return { credits, displayCredits: credits / CREDIT_DIVISOR };
     }),
 
+    /** Get plan info + credits for the credit popover */
+    planInfo: protectedProcedure.query(async ({ ctx }) => {
+      const data = await db.getUserWithPlan(ctx.user.id);
+      const credits = data?.credits ?? 0;
+      const plan = (data?.plan ?? DEFAULT_PLAN) as PlanTier;
+      const planConfig = PLANS[plan] || PLANS.free;
+      return {
+        plan,
+        planDisplayName: planConfig.displayName,
+        credits,
+        displayCredits: credits / CREDIT_DIVISOR,
+        dailyRefreshCredits: planConfig.dailyRefreshCredits,
+        dailyRefreshDisplay: planConfig.dailyRefreshCredits / CREDIT_DIVISOR,
+      };
+    }),
+
     /** List credit transactions for the current user */
     transactions: protectedProcedure
       .input(z.object({
@@ -900,6 +946,90 @@ export const appRouter = router({
           input.description,
           input.referenceId,
         );
+      }),
+  }),
+
+  automations: router({
+    list: protectedProcedure
+      .input(z.object({ instanceId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        await getOwnedInstanceOrThrow(input.instanceId, ctx.user.id);
+        return cron.listJobs(input.instanceId, ctx.user.id);
+      }),
+
+    add: protectedProcedure
+      .input(z.object({
+        instanceId: z.number(),
+        name: z.string().min(1),
+        description: z.string().optional(),
+        schedule: z.union([
+          z.object({ kind: z.literal("at"), at: z.string() }),
+          z.object({ kind: z.literal("every"), everyMs: z.number().int().positive() }),
+          z.object({ kind: z.literal("cron"), expr: z.string(), tz: z.string().optional() }),
+        ]),
+        sessionTarget: z.enum(["main", "isolated"]).default("main"),
+        payload: z.union([
+          z.object({ kind: z.literal("systemEvent"), text: z.string() }),
+          z.object({
+            kind: z.literal("agentTurn"),
+            message: z.string(),
+            model: z.string().optional(),
+            timeoutSeconds: z.number().optional(),
+          }),
+        ]),
+        delivery: z.object({
+          mode: z.enum(["announce", "webhook", "none"]),
+          channel: z.string().optional(),
+          to: z.string().optional(),
+          bestEffort: z.boolean().optional(),
+        }).optional(),
+        deleteAfterRun: z.boolean().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { instanceId, ...job } = input;
+        await getOwnedInstanceOrThrow(instanceId, ctx.user.id);
+        return cron.addJob(instanceId, ctx.user.id, job);
+      }),
+
+    toggle: protectedProcedure
+      .input(z.object({
+        instanceId: z.number(),
+        jobId: z.string(),
+        enabled: z.boolean(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await getOwnedInstanceOrThrow(input.instanceId, ctx.user.id);
+        return cron.updateJob(input.instanceId, ctx.user.id, input.jobId, { enabled: input.enabled });
+      }),
+
+    remove: protectedProcedure
+      .input(z.object({
+        instanceId: z.number(),
+        jobId: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await getOwnedInstanceOrThrow(input.instanceId, ctx.user.id);
+        return cron.removeJob(input.instanceId, ctx.user.id, input.jobId);
+      }),
+
+    run: protectedProcedure
+      .input(z.object({
+        instanceId: z.number(),
+        jobId: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await getOwnedInstanceOrThrow(input.instanceId, ctx.user.id);
+        return cron.runJob(input.instanceId, ctx.user.id, input.jobId);
+      }),
+
+    runs: protectedProcedure
+      .input(z.object({
+        instanceId: z.number(),
+        jobId: z.string(),
+      }))
+      .query(async ({ ctx, input }) => {
+        await getOwnedInstanceOrThrow(input.instanceId, ctx.user.id);
+        return cron.getJobRuns(input.instanceId, ctx.user.id, input.jobId);
       }),
   }),
 });
