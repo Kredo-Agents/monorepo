@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "NODE_ENV=development tsx watch _core/index.ts",
-    "build": "esbuild _core/index.ts --platform=node --packages=external --bundle --format=esm --outdir=../../dist",
-    "start": "NODE_ENV=production node ../../dist/index.js",
+    "build": "esbuild _core/index.ts --platform=node --packages=external --bundle --format=esm --outdir=./dist",
+    "start": "NODE_ENV=production node ./dist/index.js",
     "check": "tsc --noEmit -p ./tsconfig.json",
     "test": "vitest run --config ./vitest.config.ts",
     "db:push": "drizzle-kit generate --config ../../packages/db/drizzle.config.ts && drizzle-kit migrate --config ../../packages/db/drizzle.config.ts"
