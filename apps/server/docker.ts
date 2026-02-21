@@ -3,6 +3,7 @@ import * as fs from "fs/promises";
 import * as path from "path";
 import * as crypto from "crypto";
 import { PassThrough } from "stream";
+import { execSync } from "child_process";
 import { ENV } from "./_core/env";
 
 const docker = new Docker();
@@ -379,12 +380,26 @@ async function generateOpenClawConfig(
 }
 
 /**
+ * Fix ownership of instance files so the container's `node` user (UID 1000) can read/write them.
+ */
+async function chownInstanceFiles(instancePath: string) {
+  try {
+    execSync(`chown -R 1000:1000 ${JSON.stringify(instancePath)}`);
+  } catch {
+    execSync(`sudo chown -R 1000:1000 ${JSON.stringify(instancePath)}`);
+  }
+}
+
+/**
  * Create and start OpenClaw container
  */
 export async function createInstance(config: InstanceConfig) {
   try {
     const paths = await createInstanceDirectories(config.instanceId);
     const gatewayToken = await generateOpenClawConfig(config, paths);
+
+    // Fix file ownership for container's node user (UID 1000)
+    await chownInstanceFiles(paths.instancePath);
 
     const containerName = `openclaw-${config.instanceId}`;
 
