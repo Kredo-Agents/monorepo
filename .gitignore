@@ -48,3 +48,5 @@ coverage/
 .webdev/
 
 .claude/
+
+*.tar.gz

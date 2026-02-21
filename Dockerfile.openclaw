@@ -16,7 +16,7 @@ WORKDIR /app
 
 # Clone OpenClaw repository
 RUN git clone https://github.com/openclaw/openclaw.git . && \
-    git checkout main
+    git checkout v2026.2.6-3
 
 # Install dependencies
 RUN bun install
