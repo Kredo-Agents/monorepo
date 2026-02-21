@@ -1,5 +1,5 @@
 import { TRPCError } from "@trpc/server";
-import { CHAT_MESSAGE_COST, INSUFFICIENT_CREDITS_MSG } from "@shared/const";
+import { CHAT_MESSAGE_COST, INSUFFICIENT_CREDITS_MSG, MODELS, type ModelId } from "@shared/const";
 import * as db from "./db";
 import { readGatewayToken } from "./docker";
 
@@ -13,6 +13,7 @@ type ChatRequest = {
   instanceId: number;
   message: string;
   history?: ChatHistoryMessage[];
+  model?: string;
 };
 
 export async function handleChatRequest({
@@ -20,6 +21,7 @@ export async function handleChatRequest({
   instanceId,
   message,
   history,
+  model,
 }: ChatRequest) {
   if (!message?.trim()) {
     throw new TRPCError({ code: "BAD_REQUEST", message: "Message is required" });
@@ -38,13 +40,18 @@ export async function handleChatRequest({
     throw new TRPCError({ code: "BAD_REQUEST", message: "Instance port not configured" });
   }
 
+  // Resolve model config
+  const selectedModelId = (model as ModelId) || "premium";
+  const modelConfig = MODELS[selectedModelId] || MODELS.premium;
+  const creditCost = modelConfig.creditCost;
+
   // Check and deduct credits before processing
   const userCredits = await db.getUserCredits(userId);
-  if (userCredits < CHAT_MESSAGE_COST) {
+  if (userCredits < creditCost) {
     throw new TRPCError({ code: "FORBIDDEN", message: INSUFFICIENT_CREDITS_MSG });
   }
 
-  await db.deductCredits(userId, CHAT_MESSAGE_COST, "Chat message", `chat:${instanceId}`);
+  await db.deductCredits(userId, creditCost, `Chat message (${modelConfig.displayName})`, `chat:${instanceId}`);
 
   await db.createChatMessage({
     userId,
@@ -69,7 +76,7 @@ export async function handleChatRequest({
         ...(gatewayToken ? { "Authorization": `Bearer ${gatewayToken}` } : {}),
       },
       body: JSON.stringify({
-        model: "openclaw:main",
+        model: modelConfig.gatewayModel,
         messages,
         user: `user-${userId}`,
       }),
@@ -77,7 +84,7 @@ export async function handleChatRequest({
   } catch (err) {
     console.error("Gateway chat request failed:", err);
     // Refund the credit since the request never reached the gateway
-    await db.addCredits(userId, CHAT_MESSAGE_COST, "refund", "Chat message failed - refund", `chat:${instanceId}`);
+    await db.addCredits(userId, creditCost, "refund", "Chat message failed - refund", `chat:${instanceId}`);
     throw new TRPCError({
       code: "SERVICE_UNAVAILABLE",
       message:
@@ -87,7 +94,7 @@ export async function handleChatRequest({
 
   if (!fetchResponse.ok) {
     // Refund on gateway error
-    await db.addCredits(userId, CHAT_MESSAGE_COST, "refund", "Chat message failed - refund", `chat:${instanceId}`);
+    await db.addCredits(userId, creditCost, "refund", "Chat message failed - refund", `chat:${instanceId}`);
     if (fetchResponse.status === 404) {
       throw new TRPCError({
         code: "BAD_REQUEST",
@@ -107,7 +114,7 @@ export async function handleChatRequest({
     response = await fetchResponse.json();
   } catch (err) {
     console.error("Failed to parse gateway response:", err);
-    await db.addCredits(userId, CHAT_MESSAGE_COST, "refund", "Chat message failed - refund", `chat:${instanceId}`);
+    await db.addCredits(userId, creditCost, "refund", "Chat message failed - refund", `chat:${instanceId}`);
     throw new TRPCError({
       code: "BAD_REQUEST",
       message: "Gateway chat response was not valid JSON.",
@@ -116,7 +123,7 @@ export async function handleChatRequest({
   const assistantResponse = response?.choices?.[0]?.message?.content;
 
   if (!assistantResponse) {
-    await db.addCredits(userId, CHAT_MESSAGE_COST, "refund", "Chat message failed - refund", `chat:${instanceId}`);
+    await db.addCredits(userId, creditCost, "refund", "Chat message failed - refund", `chat:${instanceId}`);
     throw new TRPCError({ code: "BAD_REQUEST", message: "Gateway chat response was empty." });
   }
 

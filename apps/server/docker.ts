@@ -212,6 +212,18 @@ async function generateOpenClawConfig(
     // OpenClaw auth profiles are metadata only (no secrets here).
   };
 
+  // Secondary model (OpenRouter - cheap/flash model)
+  const openrouterApiKey = process.env.OPENROUTER_API_KEY;
+  if (openrouterApiKey) {
+    const cheapModelKey = "openrouter/step/step-3-5-flash";
+    configContent.agents.defaults.models[cheapModelKey] = {};
+    configContent.env.OPENROUTER_API_KEY = openrouterApiKey;
+    configContent.auth.profiles["openrouter:default"] = {
+      provider: "openrouter",
+      mode: "token",
+    };
+  }
+
   // Add channels config
   configContent.channels = {};
   

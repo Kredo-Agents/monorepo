@@ -1,4 +1,4 @@
-import { COOKIE_NAME, INSTANCE_DAILY_COST, CREDIT_DIVISOR } from "@shared/const";
+import { COOKIE_NAME, INSTANCE_DAILY_COST, CREDIT_DIVISOR, PLANS, DEFAULT_PLAN, type PlanTier } from "@shared/const";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getSessionCookieOptions } from "./_core/cookies";
@@ -457,6 +457,7 @@ export const appRouter = router({
       .input(z.object({
         instanceId: z.number(),
         message: z.string(),
+        model: z.enum(["premium", "cheap"]).optional().default("premium"),
         history: z.array(
           z.object({
             role: z.enum(["user", "assistant", "system"]),
@@ -470,6 +471,7 @@ export const appRouter = router({
           instanceId: input.instanceId,
           message: input.message,
           history: input.history,
+          model: input.model,
         });
       }),
   }),
@@ -853,6 +855,22 @@ export const appRouter = router({
     balance: protectedProcedure.query(async ({ ctx }) => {
       const credits = await db.getUserCredits(ctx.user.id);
       return { credits, displayCredits: credits / CREDIT_DIVISOR };
+    }),
+
+    /** Get plan info + credits for the credit popover */
+    planInfo: protectedProcedure.query(async ({ ctx }) => {
+      const data = await db.getUserWithPlan(ctx.user.id);
+      const credits = data?.credits ?? 0;
+      const plan = (data?.plan ?? DEFAULT_PLAN) as PlanTier;
+      const planConfig = PLANS[plan] || PLANS.free;
+      return {
+        plan,
+        planDisplayName: planConfig.displayName,
+        credits,
+        displayCredits: credits / CREDIT_DIVISOR,
+        dailyRefreshCredits: planConfig.dailyRefreshCredits,
+        dailyRefreshDisplay: planConfig.dailyRefreshCredits / CREDIT_DIVISOR,
+      };
     }),
 
     /** List credit transactions for the current user */

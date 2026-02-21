@@ -249,7 +249,7 @@ export default function SettingsPage() {
                 </p>
               </div>
               <div className="space-y-3">
-                <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 transition-all hover:border-zinc-300 dark:hover:border-zinc-700">
+                <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 opacity-40 pointer-events-none select-none">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-3">
                       <Boxes className="h-6 w-6 text-blue-500" aria-hidden="true" />
@@ -258,15 +258,7 @@ export default function SettingsPage() {
                         <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400">Connect to Matrix/Element</p>
                       </div>
                     </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={config.matrixEnabled}
-                        onChange={(e) => setConfig({ ...config, matrixEnabled: e.target.checked })}
-                        className="sr-only peer"
-                      />
-                      <div className="w-12 h-6 bg-zinc-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-zinc-600 peer-checked:bg-blue-600"></div>
-                    </label>
+                    <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-2.5 py-1 rounded-full">Coming soon</span>
                   </div>
                   {config.matrixEnabled && (
                     <div className="space-y-3 mt-4 pt-4 border-t border-zinc-200 dark:border-zinc-800">
@@ -310,7 +302,7 @@ export default function SettingsPage() {
                   )}
                 </div>
 
-                <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 transition-all hover:border-zinc-300 dark:hover:border-zinc-700">
+                <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 opacity-40 pointer-events-none select-none">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-3">
                       <MessageSquare className="h-6 w-6 text-indigo-500" aria-hidden="true" />
@@ -319,15 +311,7 @@ export default function SettingsPage() {
                         <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400">Connect to Discord servers</p>
                       </div>
                     </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={config.discordEnabled}
-                        onChange={(e) => setConfig({ ...config, discordEnabled: e.target.checked })}
-                        className="sr-only peer"
-                      />
-                      <div className="w-12 h-6 bg-zinc-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-zinc-600 peer-checked:bg-blue-600"></div>
-                    </label>
+                    <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-2.5 py-1 rounded-full">Coming soon</span>
                   </div>
                   {config.discordEnabled && (
                     <div className="space-y-3 mt-4 pt-4 border-t border-zinc-200 dark:border-zinc-800">
@@ -378,7 +362,7 @@ export default function SettingsPage() {
                   )}
                 </div>
 
-                <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 transition-all hover:border-zinc-300 dark:hover:border-zinc-700">
+                <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 opacity-40 pointer-events-none select-none">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-3">
                       <Slack className="h-6 w-6 text-emerald-500" aria-hidden="true" />
@@ -387,15 +371,7 @@ export default function SettingsPage() {
                         <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400">Connect to Slack workspaces</p>
                       </div>
                     </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={config.slackEnabled}
-                        onChange={(e) => setConfig({ ...config, slackEnabled: e.target.checked })}
-                        className="sr-only peer"
-                      />
-                      <div className="w-12 h-6 bg-zinc-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-zinc-600 peer-checked:bg-blue-600"></div>
-                    </label>
+                    <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-2.5 py-1 rounded-full">Coming soon</span>
                   </div>
                   {config.slackEnabled && (
                     <div className="space-y-3 mt-4 pt-4 border-t border-zinc-200 dark:border-zinc-800">
@@ -519,7 +495,7 @@ export default function SettingsPage() {
                   )}
                 </div>
 
-                <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 transition-all hover:border-zinc-300 dark:hover:border-zinc-700">
+                <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 opacity-40 pointer-events-none select-none">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-3">
                       <MessageCircle className="h-6 w-6 text-green-500" aria-hidden="true" />
@@ -528,15 +504,7 @@ export default function SettingsPage() {
                         <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400">Connect WhatsApp Business</p>
                       </div>
                     </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={config.whatsappEnabled}
-                        onChange={(e) => setConfig({ ...config, whatsappEnabled: e.target.checked })}
-                        className="sr-only peer"
-                      />
-                      <div className="w-12 h-6 bg-zinc-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-zinc-600 peer-checked:bg-blue-600"></div>
-                    </label>
+                    <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-2.5 py-1 rounded-full">Coming soon</span>
                   </div>
                   {config.whatsappEnabled && (
                     <div className="space-y-3 mt-4 pt-4 border-t border-zinc-200 dark:border-zinc-800">

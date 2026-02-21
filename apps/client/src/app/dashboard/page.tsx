@@ -2,21 +2,76 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { trpc } from '@/lib/trpc';
-import { Bot, Send, User, ArrowUp, ChevronDown, Coins } from 'lucide-react';
+import { User, ArrowUp, ChevronDown } from 'lucide-react';
 import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import UserAvatar from '@/components/auth/UserAvatar';
-import Link from 'next/link';
+import CreditPopover from '@/components/dashboard/CreditPopover';
 
-function ModelSelector() {
+type ModelOption = { id: 'premium' | 'cheap'; name: string; badge?: string };
+
+const MODEL_OPTIONS: ModelOption[] = [
+  { id: 'premium', name: 'Claude Opus 4.6' },
+  { id: 'cheap', name: 'Step 3.5 Flash', badge: 'Fast' },
+];
+
+function ModelSelector({
+  selected,
+  onChange,
+}: {
+  selected: 'premium' | 'cheap';
+  onChange: (model: 'premium' | 'cheap') => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const current = MODEL_OPTIONS.find((m) => m.id === selected) || MODEL_OPTIONS[0];
+
   return (
-    <button
-      type="button"
-      className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800/70 transition-colors"
-    >
-      Claude Opus 4.6
-      <ChevronDown className="h-3.5 w-3.5 text-zinc-400" aria-hidden="true" />
-    </button>
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800/70 transition-colors"
+      >
+        {current.name}
+        <ChevronDown className="h-3.5 w-3.5 text-zinc-400" aria-hidden="true" />
+      </button>
+
+      {open && (
+        <div className="absolute top-full mt-1 left-0 w-56 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-lg py-1 z-50">
+          {MODEL_OPTIONS.map((model) => (
+            <button
+              key={model.id}
+              type="button"
+              onClick={() => { onChange(model.id); setOpen(false); }}
+              className={`w-full flex items-center justify-between px-3 py-2 text-sm transition-colors ${
+                model.id === selected
+                  ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50'
+                  : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800/50'
+              }`}
+            >
+              <span>{model.name}</span>
+              {model.badge && (
+                <span className="text-xs px-1.5 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
+                  {model.badge}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -72,11 +127,11 @@ export default function DashboardPage() {
     { enabled: Boolean(activeInstance) }
   );
   const utils = trpc.useUtils();
-  const { data: balanceData } = trpc.credits.balance.useQuery();
   const sendChatMutation = trpc.chat.send.useMutation();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isSending, setIsSending] = useState(false);
+  const [selectedModel, setSelectedModel] = useState<'premium' | 'cheap'>('premium');
   const listRef = useRef<HTMLDivElement | null>(null);
   const lastInstanceIdRef = useRef<number | null>(null);
 
@@ -142,6 +197,7 @@ export default function DashboardPage() {
       const data = await sendChatMutation.mutateAsync({
         instanceId: activeInstance.id,
         message: trimmed,
+        model: selectedModel,
         history: nextHistory,
       });
       const assistantMessage: ChatMessage = {
@@ -150,8 +206,9 @@ export default function DashboardPage() {
         content: data.response || 'No response returned.',
       };
       setMessages((prev) => [...prev, assistantMessage]);
-      // Refresh credit balance in sidebar after message
+      // Refresh credit balance after message
       void utils.credits.balance.invalidate();
+      void utils.credits.planInfo.invalidate();
     } catch (error: any) {
       const msg = error?.message ?? '';
       const isInsufficientCredits = msg.includes('10003') || msg.includes('Insufficient credits');
@@ -183,16 +240,10 @@ export default function DashboardPage() {
     return (
       <div className="h-screen flex flex-col items-center justify-center px-6 animate-fade-in">
         <div className="absolute top-4 left-4">
-          <ModelSelector />
+          <ModelSelector selected={selectedModel} onChange={setSelectedModel} />
         </div>
         <div className="absolute top-4 right-4 flex items-center gap-3">
-          <Link
-            href="/dashboard/credits"
-            className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800/70 transition-colors"
-          >
-            <Coins className="h-3.5 w-3.5" aria-hidden="true" />
-            {balanceData?.displayCredits ?? '—'}
-          </Link>
+          <CreditPopover />
           <UserAvatar size="sm" />
         </div>
         <h1 className="text-4xl md:text-5xl font-light text-zinc-400 dark:text-zinc-500 mb-10 text-center">
@@ -244,101 +295,94 @@ export default function DashboardPage() {
   return (
     <div className="h-screen flex flex-col">
       <div className="flex items-center justify-between px-4 py-3">
-        <ModelSelector />
+        <ModelSelector selected={selectedModel} onChange={setSelectedModel} />
         <div className="flex items-center gap-3">
-          <Link
-            href="/dashboard/credits"
-            className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800/70 transition-colors"
-          >
-            <Coins className="h-3.5 w-3.5" aria-hidden="true" />
-            {balanceData?.displayCredits ?? '—'}
-          </Link>
+          <CreditPopover />
           <UserAvatar size="sm" />
         </div>
       </div>
-      <div ref={listRef} className="flex-1 overflow-y-auto px-8 py-8 space-y-6 pb-24">
-        {isLoading && (
-          <div className="text-sm text-zinc-500 dark:text-zinc-400">Loading assistant...</div>
-        )}
-        {messages.map((message) => (
-          <div
-            key={message.id}
-            className={`max-w-3xl ${
-              message.role === 'user'
-                ? 'ml-auto text-right'
-                : 'mr-auto text-left'
-            }`}
-          >
-            <div className="flex items-start gap-3">
-              <div
-                className={`h-10 w-10 rounded-full flex items-center justify-center shrink-0 ${
-                  message.role === 'user'
-                    ? 'bg-zinc-900 text-white dark:bg-zinc-50 dark:text-zinc-900'
-                    : 'bg-blue-600 text-white'
-                }`}
-              >
+
+      <div className="flex-1 overflow-y-auto" ref={listRef}>
+        <div className="max-w-3xl mx-auto px-6 py-8 space-y-6">
+          {isLoading && (
+            <div className="text-sm text-zinc-500 dark:text-zinc-400">Loading assistant...</div>
+          )}
+          {messages.map((message) => (
+            <div
+              key={message.id}
+              className={`${
+                message.role === 'user'
+                  ? 'ml-auto text-right'
+                  : 'mr-auto text-left'
+              }`}
+            >
+              <div className={`flex items-start gap-3 ${message.role === 'user' ? 'flex-row-reverse' : ''}`}>
                 {message.role === 'user' ? (
-                  <User className="h-5 w-5" aria-hidden="true" />
+                  <div className="h-10 w-10 rounded-full flex items-center justify-center shrink-0 bg-zinc-900 text-white dark:bg-zinc-50 dark:text-zinc-900">
+                    <User className="h-5 w-5" aria-hidden="true" />
+                  </div>
                 ) : (
-                  <Bot className="h-5 w-5" strokeWidth={1.6} aria-hidden="true" />
+                  <div className="h-10 w-10 rounded-full shrink-0 bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center p-2">
+                    <img src="/logo-footer.png" alt="Assistant" className="h-full w-full object-contain" />
+                  </div>
                 )}
-              </div>
-              <div
-                className={`inline-block px-4 py-3 rounded-2xl text-sm leading-relaxed ${
-                  message.role === 'user'
-                    ? 'bg-zinc-900 text-white dark:bg-zinc-50 dark:text-zinc-900'
-                    : 'bg-white text-zinc-900 dark:bg-zinc-900/60 dark:text-zinc-100 border border-zinc-200/70 dark:border-zinc-800/70'
-                }`}
-              >
-                <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
-                  components={markdownComponents}
+                <div
+                  className={`inline-block px-4 py-3 rounded-2xl text-sm leading-relaxed ${
+                    message.role === 'user'
+                      ? 'bg-zinc-900 text-white dark:bg-zinc-50 dark:text-zinc-900'
+                      : 'bg-white text-zinc-900 dark:bg-zinc-900/60 dark:text-zinc-100 border border-zinc-200/70 dark:border-zinc-800/70'
+                  }`}
                 >
-                  {message.content}
-                </ReactMarkdown>
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={markdownComponents}
+                  >
+                    {message.content}
+                  </ReactMarkdown>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-        {isSending && activeInstance && (
-          <div className="max-w-3xl mr-auto text-left">
-            <div className="flex items-start gap-3">
-              <div className="h-10 w-10 rounded-full flex items-center justify-center shrink-0 bg-blue-600 text-white">
-                <Bot className="h-5 w-5" strokeWidth={1.6} aria-hidden="true" />
-              </div>
-              <div className="inline-block px-4 py-3 rounded-2xl text-sm leading-relaxed bg-white text-zinc-900 dark:bg-zinc-900/60 dark:text-zinc-100 border border-zinc-200/70 dark:border-zinc-800/70">
-                <span className="dot-wave" aria-label="Assistant is responding">
-                  <span>.</span>
-                  <span>.</span>
-                  <span>.</span>
-                </span>
+          ))}
+          {isSending && activeInstance && (
+            <div className="mr-auto text-left">
+              <div className="flex items-start gap-3">
+                <div className="h-10 w-10 rounded-full shrink-0 bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center p-2">
+                    <img src="/logo-footer.png" alt="Assistant" className="h-full w-full object-contain" />
+                  </div>
+                <div className="inline-block px-4 py-3 rounded-2xl text-sm leading-relaxed bg-white text-zinc-900 dark:bg-zinc-900/60 dark:text-zinc-100 border border-zinc-200/70 dark:border-zinc-800/70">
+                  <span className="dot-wave" aria-label="Assistant is responding">
+                    <span>.</span>
+                    <span>.</span>
+                    <span>.</span>
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
-      <div className="sticky bottom-0 px-6 py-4">
-        <div className="max-w-4xl mx-auto flex items-end gap-3">
-          <div className="flex-1 rounded-2xl border border-zinc-200/70 dark:border-zinc-800/70 bg-white dark:bg-zinc-900/60 px-4 py-3 shadow-sm">
-            <textarea
-              value={inputValue}
-              onChange={(event) => setInputValue(event.target.value)}
-              onKeyDown={handleInputKeyDown}
-              placeholder="Send a message..."
-              rows={1}
-              className="w-full resize-none bg-transparent text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none"
-              disabled={!activeInstance || isSending}
-            />
+      <div className="px-6 py-4">
+        <div className="max-w-3xl mx-auto rounded-2xl border border-zinc-200/70 dark:border-zinc-800/70 bg-white dark:bg-zinc-900/60 px-4 py-3 shadow-sm">
+          <textarea
+            value={inputValue}
+            onChange={(event) => setInputValue(event.target.value)}
+            onKeyDown={handleInputKeyDown}
+            placeholder="Send a message..."
+            rows={3}
+            className="w-full resize-none bg-transparent text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none placeholder:text-zinc-400 dark:placeholder:text-zinc-600"
+            disabled={!activeInstance || isSending}
+          />
+          <div className="flex items-center justify-end pt-1">
+            <button
+              onClick={handleSend}
+              disabled={!canSend}
+              className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-zinc-900 text-white hover:bg-zinc-700 disabled:opacity-30 disabled:cursor-not-allowed dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200 transition-colors"
+              aria-label="Send message"
+            >
+              <ArrowUp className="h-4 w-4" aria-hidden="true" />
+            </button>
           </div>
-          <button
-            onClick={handleSend}
-            disabled={!canSend}
-            className="inline-flex items-center justify-center h-11 w-11 rounded-full bg-zinc-900 text-white hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200 transition-colors shadow-sm"
-            aria-label="Send message"
-          >
-            <Send className="h-4 w-4" aria-hidden="true" />
-          </button>
         </div>
       </div>
     </div>

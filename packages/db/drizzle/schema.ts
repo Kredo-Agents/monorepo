@@ -11,6 +11,8 @@ export const users = mysqlTable("users", {
   loginMethod: varchar("loginMethod", { length: 64 }),
   role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
   credits: int("credits").default(500).notNull(), // stored as tenths; 500 = 50.0 display credits
+  plan: varchar("plan", { length: 20 }).default("free").notNull(),
+  lastDailyRefresh: timestamp("lastDailyRefresh"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
@@ -168,7 +170,7 @@ export const creditTransactions = mysqlTable("creditTransactions", {
   userId: int("userId").notNull(),
   amount: int("amount").notNull(), // positive = credit added, negative = credit spent
   balance: int("balance").notNull(), // balance after this transaction
-  type: mysqlEnum("type", ["initial", "topup", "deduction", "refund", "adjustment"]).notNull(),
+  type: mysqlEnum("type", ["initial", "topup", "deduction", "refund", "adjustment", "daily_refresh"]).notNull(),
   description: text("description"),
   referenceId: varchar("referenceId", { length: 255 }), // optional external ref (e.g. instance id, payment id)
   createdAt: timestamp("createdAt").defaultNow().notNull(),
