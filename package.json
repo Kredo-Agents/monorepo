@@ -8,8 +8,6 @@
   "scripts": {
     "dev": "bun --filter @kredo/server dev",
     "dev:client": "bun --filter @kredo/client dev",
-    "build": "bun --filter @kredo/client build && bun --filter @kredo/server build",
-    "start": "bun --filter @kredo/server start",
     "check": "bun --filter @kredo/client check && bun --filter @kredo/server check",
     "format": "prettier --write .",
     "test": "bun --filter @kredo/server test",
