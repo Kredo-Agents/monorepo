@@ -8,11 +8,14 @@ import remarkGfm from 'remark-gfm';
 import UserAvatar from '@/components/auth/UserAvatar';
 import CreditPopover from '@/components/dashboard/CreditPopover';
 
-type ModelOption = { id: 'premium' | 'cheap'; name: string; badge?: string };
+type ModelOption = { id: string; name: string; badge?: string; disabled?: boolean };
 
 const MODEL_OPTIONS: ModelOption[] = [
   { id: 'premium', name: 'Gemini 2.5 Flash' },
-  { id: 'cheap', name: 'Step 3.5 Flash', badge: 'Fast' },
+  { id: 'cheap', name: 'Step 3.5 Flash', badge: 'Soon', disabled: true },
+  { id: 'claude-sonnet', name: 'Claude Sonnet 4.6', badge: 'Soon', disabled: true },
+  { id: 'deepseek-r1', name: 'DeepSeek R1', badge: 'Soon', disabled: true },
+  { id: 'claude-opus', name: 'Claude Opus 4.6', badge: 'Soon', disabled: true },
 ];
 
 function ModelSelector({
@@ -54,16 +57,23 @@ function ModelSelector({
             <button
               key={model.id}
               type="button"
-              onClick={() => { onChange(model.id); setOpen(false); }}
+              disabled={model.disabled}
+              onClick={() => { if (!model.disabled) { onChange(model.id as 'premium' | 'cheap'); setOpen(false); } }}
               className={`w-full flex items-center justify-between px-3 py-2 text-sm transition-colors ${
-                model.id === selected
-                  ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50'
-                  : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800/50'
+                model.disabled
+                  ? 'opacity-50 cursor-not-allowed text-zinc-400 dark:text-zinc-600'
+                  : model.id === selected
+                    ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50'
+                    : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800/50'
               }`}
             >
               <span>{model.name}</span>
               {model.badge && (
-                <span className="text-xs px-1.5 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
+                <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                  model.disabled
+                    ? 'bg-zinc-100 dark:bg-zinc-800/50 text-zinc-400 dark:text-zinc-600'
+                    : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                }`}>
                   {model.badge}
                 </span>
               )}
