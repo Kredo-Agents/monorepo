@@ -85,7 +85,7 @@ describe("instances", () => {
       llmProvider: null,
       llmApiKey: null,
       llmModel: null,
-      config: { provider: "anthropic", authToken: "token" },
+      config: { provider: "google", authToken: "token" },
       port: 18790,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -101,7 +101,7 @@ describe("instances", () => {
     const instance = await caller.instances.create({
       name: "Test Instance",
       description: "A test instance",
-      config: { provider: "anthropic", authToken: "token" },
+      config: { provider: "google", authToken: "token" },
     });
 
     expect(instance).toHaveProperty("id");
@@ -128,7 +128,7 @@ describe("instances", () => {
         llmProvider: null,
         llmApiKey: null,
         llmModel: null,
-        config: { provider: "anthropic", authToken: "token" },
+        config: { provider: "google", authToken: "token" },
         port: 18790,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -142,7 +142,7 @@ describe("instances", () => {
         llmProvider: null,
         llmApiKey: null,
         llmModel: null,
-        config: { provider: "anthropic", authToken: "token" },
+        config: { provider: "google", authToken: "token" },
         port: 18791,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -161,7 +161,7 @@ describe("instances", () => {
 
     const instance = await caller.instances.create({
       name: "Retry Instance",
-      config: { provider: "anthropic", authToken: "token" },
+      config: { provider: "google", authToken: "token" },
     });
 
     expect(instance.id).toBe(2);

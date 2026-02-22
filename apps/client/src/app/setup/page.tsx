@@ -94,7 +94,7 @@ export default function SetupPage() {
     instanceName: '',
     description: '',
     llmApiKey: '',
-    llmModel: 'claude-opus-4-6',
+    llmModel: 'gemini-2.5-flash',
     matrixEnabled: false,
     matrixHomeserver: '',
     matrixAccessToken: '',
@@ -378,10 +378,10 @@ export default function SetupPage() {
       const result = await createInstanceMutation.mutateAsync({
         name: resolvedInstanceName,
         description: config.description || undefined,
-        llmProvider: 'anthropic',
+        llmProvider: 'google',
         llmModel: config.llmModel || undefined,
         config: {
-          provider: 'anthropic',
+          provider: 'google',
           model: config.llmModel || undefined,
           authToken: resolvedKey,
           matrix: config.matrixEnabled && config.matrixHomeserver && config.matrixAccessToken ? {

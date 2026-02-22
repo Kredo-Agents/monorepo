@@ -51,7 +51,7 @@ export interface ModelConfig {
 export const MODELS: Record<ModelId, ModelConfig> = {
   premium: {
     id: 'premium',
-    displayName: 'Claude Opus 4.6',
+    displayName: 'Gemini 2.5 Flash',
     gatewayModel: 'openclaw:main',
     creditCost: 1, // 0.1 display credits
   },

@@ -11,7 +11,7 @@ import CreditPopover from '@/components/dashboard/CreditPopover';
 type ModelOption = { id: 'premium' | 'cheap'; name: string; badge?: string };
 
 const MODEL_OPTIONS: ModelOption[] = [
-  { id: 'premium', name: 'Claude Opus 4.6' },
+  { id: 'premium', name: 'Gemini 2.5 Flash' },
   { id: 'cheap', name: 'Step 3.5 Flash', badge: 'Fast' },
 ];
 

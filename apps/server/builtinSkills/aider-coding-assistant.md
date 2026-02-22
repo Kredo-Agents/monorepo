@@ -36,13 +36,13 @@ pip install aider-chat
 **The LLM model is automatically configured from the instance settings.**
 
 When you create an OpenClaw instance, you configure:
-- LLM Provider (OpenAI, Anthropic, DeepSeek, etc.)
-- Model name (gpt-4o, claude-sonnet-4, deepseek-chat, etc.)
+- LLM Provider (Google, OpenAI, DeepSeek, etc.)
+- Model name (gemini-2.5-flash, gpt-4o, deepseek-chat, etc.)
 - API Key
 
 These are automatically injected as environment variables:
 - `OPENAI_API_KEY` for OpenAI models
-- `ANTHROPIC_API_KEY` for Anthropic models
+- `GOOGLE_API_KEY` for Google Gemini models
 - `DEEPSEEK_API_KEY` for DeepSeek models
 
 Aider will automatically detect and use these environment variables.
@@ -112,7 +112,7 @@ Aider will automatically detect relevant files based on the task.
 If you need to override for specific tasks, you can specify `--model` explicitly:
 
 - **Simple edits** (bug fixes, small changes): `deepseek-chat` - Fast and cost-effective
-- **Complex features** (new functionality): `claude-sonnet-4` - Better reasoning  
+- **Complex features** (new functionality): `gemini-2.5-flash` - Better reasoning
 - **Architecture planning** (system design): `gpt-4o` with `--architect` flag
 
 **Example:**
@@ -222,12 +222,12 @@ If aider fails, check:
 **Automatic Configuration (Recommended):**
 
 When creating an OpenClaw instance in Kredo:
-1. Select your LLM provider (DeepSeek, OpenAI, or Anthropic)
+1. Select your LLM provider (Google, DeepSeek, or OpenAI)
 2. Enter your API key in the instance configuration
 3. The API key is automatically injected as an environment variable:
+   - Google → `GOOGLE_API_KEY`
    - DeepSeek → `DEEPSEEK_API_KEY`
    - OpenAI → `OPENAI_API_KEY`
-   - Anthropic → `ANTHROPIC_API_KEY`
 
 No manual configuration needed! Just install this skill and start using aider.
 
@@ -236,9 +236,9 @@ No manual configuration needed! Just install this skill and start using aider.
 If you need to set API keys manually in the container:
 
 ```bash
+export GOOGLE_API_KEY="your_api_key_here"
 export DEEPSEEK_API_KEY="your_api_key_here"
 export OPENAI_API_KEY="your_api_key_here"
-export ANTHROPIC_API_KEY="your_api_key_here"
 ```
 
 Or add them to the instance configuration in Kredo's management interface.
