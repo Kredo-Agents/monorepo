@@ -33,7 +33,7 @@ export const instances = mysqlTable("instances", {
   config: json("config").$type<Record<string, unknown>>(),
   port: int("port"),
   // LLM Configuration for AI coding tools (aider, etc.)
-  llmProvider: varchar("llmProvider", { length: 50 }), // deepseek, openai, anthropic, etc.
+  llmProvider: varchar("llmProvider", { length: 50 }), // google, deepseek, openai, etc.
   llmApiKey: text("llmApiKey"), // API key for the LLM provider
   llmModel: varchar("llmModel", { length: 100 }), // Specific model to use
   createdAt: timestamp("createdAt").defaultNow().notNull(),

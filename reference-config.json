@@ -16,10 +16,10 @@
         "openrouter/auto": {
           "alias": "OpenRouter"
         },
-        "openrouter/anthropic/claude-sonnet-4": {}
+        "google/gemini-2.5-flash": {}
       },
       "model": {
-        "primary": "openrouter/anthropic/claude-sonnet-4"
+        "primary": "google/gemini-2.5-flash"
       }
     }
   },

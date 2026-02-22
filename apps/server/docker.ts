@@ -77,7 +77,7 @@ async function generateOpenClawConfig(
 ) {
   const gatewayToken = generateGatewayToken();
   if (!config.authToken) {
-    throw new Error("Anthropic auth token is required.");
+    throw new Error("Google API key is required.");
   }
 
   // Build full config file (based on user-provided structure)
@@ -110,7 +110,7 @@ async function generateOpenClawConfig(
           mode: "safeguard",
         },
         workspace: "/home/node/.openclaw/workspace", // Container workspace path
-        // Model config (Anthropic only)
+        // Model config
         models: {},
         model: {
           primary: "", // Filled later
@@ -141,6 +141,7 @@ async function generateOpenClawConfig(
       bind: "lan", // Allow host access via published port
       controlUi: {
         allowInsecureAuth: true,
+        dangerouslyDisableDeviceAuth: true,
       },
       tailscale: {
         mode: "off",
@@ -187,16 +188,13 @@ async function generateOpenClawConfig(
     },
   };
 
-  // Configure model (Anthropic token only)
-  // Note: config.model may already include the provider prefix (e.g. "anthropic/claude-sonnet-4.5")
+  // Configure model
   let fullModelKey: string;
   if (config.model && config.model.includes("/")) {
-    // If it already contains "/", it's a full model key
     fullModelKey = config.model;
   } else {
-    // Otherwise add the Anthropics prefix
-    const modelName = config.model || "default";
-    fullModelKey = `anthropic/${modelName}`;
+    const modelName = config.model || "gemini-2.5-flash";
+    fullModelKey = `google/${modelName}`;
   }
 
   configContent.agents.defaults.models[fullModelKey] = {};
@@ -205,12 +203,10 @@ async function generateOpenClawConfig(
   // Secrets are passed via Docker environment variables only (not written to config files)
   // to prevent the agent from reading and displaying them.
 
-  // Configure auth profile (Anthropic token only for now)
-  const profileKey = "anthropic:default";
+  const profileKey = "google:default";
   configContent.auth.profiles[profileKey] = {
-    provider: "anthropic",
+    provider: "google",
     mode: "token",
-    // OpenClaw auth profiles are metadata only (no secrets here).
   };
 
   // Secondary model (OpenRouter - cheap/flash model)
@@ -332,13 +328,13 @@ async function generateOpenClawConfig(
       "## NEVER display secrets",
       "",
       "You MUST NEVER display, print, echo, or output any of the following:",
-      "- API keys, auth tokens, or credentials (e.g. ANTHROPIC_AUTH_TOKEN, OPENROUTER_API_KEY, bot tokens)",
+      "- API keys, auth tokens, or credentials (e.g. GOOGLE_API_KEY, OPENROUTER_API_KEY, bot tokens)",
       "- The contents of environment variables that contain secrets",
       "- The contents of auth-profiles.json or any file containing tokens",
       "- Gateway tokens, webhook secrets, or any string that looks like a secret key",
       "",
       "If asked about credentials or tokens:",
-      '- Confirm whether they are set (e.g. "Yes, ANTHROPIC_AUTH_TOKEN is configured")',
+      '- Confirm whether they are set (e.g. "Yes, GOOGLE_API_KEY is configured")',
       "- NEVER show the actual value, not even partially",
       "- NEVER read or cat files just to display their secret contents",
       "",
@@ -346,8 +342,6 @@ async function generateOpenClawConfig(
     ].join("\n")
   );
 
-  // Seed auth store for embedded agents (Anthropic token only).
-  // Token is referenced via env var, not stored in plaintext.
   const authStoreDir = path.join(paths.configPath, "agents", "main", "agent");
   await fs.mkdir(authStoreDir, { recursive: true });
   const now = Date.now();
@@ -356,12 +350,12 @@ async function generateOpenClawConfig(
     profiles: {
       [profileKey]: {
         type: "token",
-        provider: "anthropic",
+        provider: "google",
         token: config.authToken,
       },
     },
     lastGood: {
-      anthropic: profileKey,
+      google: profileKey,
     },
     usageStats: {
       [profileKey]: {
@@ -381,12 +375,18 @@ async function generateOpenClawConfig(
 
 /**
  * Fix ownership of instance files so the container's `node` user (UID 1000) can read/write them.
+ * On macOS (local dev), Docker Desktop handles UID mapping so this is not required.
  */
 async function chownInstanceFiles(instancePath: string) {
+  if (process.platform === "darwin") return;
   try {
     execSync(`chown -R 1000:1000 ${JSON.stringify(instancePath)}`);
   } catch {
-    execSync(`sudo chown -R 1000:1000 ${JSON.stringify(instancePath)}`);
+    try {
+      execSync(`sudo -n chown -R 1000:1000 ${JSON.stringify(instancePath)}`);
+    } catch {
+      console.warn(`chown failed for ${instancePath} — container may have permission issues`);
+    }
   }
 }
 
@@ -421,7 +421,7 @@ export async function createInstance(config: InstanceConfig) {
         // Config file path
         "OPENCLAW_CONFIG_PATH=/home/node/.openclaw/openclaw.json",
         // LLM API keys passed as env vars only (never written to config files)
-        `ANTHROPIC_AUTH_TOKEN=${config.authToken}`,
+        `GOOGLE_API_KEY=${config.authToken}`,
         ...(process.env.OPENROUTER_API_KEY
           ? [`OPENROUTER_API_KEY=${process.env.OPENROUTER_API_KEY}`]
           : []),
@@ -431,7 +431,7 @@ export async function createInstance(config: InstanceConfig) {
       },
       HostConfig: {
         PortBindings: {
-          "18789/tcp": [{ HostPort: config.port.toString() }],
+          "18789/tcp": [{ HostPort: config.port.toString(), HostIp: "127.0.0.1" }],
         },
         Binds: [
           // Mount config directory (read-write) so gateway/doctor can persist changes

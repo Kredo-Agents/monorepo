@@ -114,7 +114,7 @@ export const appRouter = router({
         llmApiKey: z.string().optional(),
         llmModel: z.string().optional(),
         config: z.object({
-          provider: z.literal("anthropic").optional().default("anthropic"),
+          provider: z.string().optional().default("google"),
           model: z.string().optional(),
           authToken: z.string().optional(),
           telegram: z.object({
@@ -143,11 +143,11 @@ export const appRouter = router({
             webhookUrl: z.string().optional(),
           }).optional(),
         }).superRefine((config, ctx) => {
-          const envAnthropicToken = process.env.ANTHROPIC_AUTH_TOKEN;
-          if (!config.authToken?.trim() && !envAnthropicToken?.trim()) {
+          const envGoogleApiKey = process.env.GOOGLE_API_KEY;
+          if (!config.authToken?.trim() && !envGoogleApiKey?.trim()) {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
-              message: "Anthropic auth token is required.",
+              message: "Google API key is required.",
               path: ["authToken"],
             });
           }
@@ -172,11 +172,11 @@ export const appRouter = router({
           });
         }
 
-        const envAnthropicToken = process.env.ANTHROPIC_AUTH_TOKEN;
-        const resolvedAuthToken = input.config.authToken || envAnthropicToken;
+        const envGoogleApiKey = process.env.GOOGLE_API_KEY;
+        const resolvedAuthToken = input.config.authToken || envGoogleApiKey;
         const resolvedConfig = {
           ...input.config,
-          provider: "anthropic",
+          provider: "google",
           authToken: resolvedAuthToken,
         };
 
@@ -337,8 +337,8 @@ export const appRouter = router({
 
         // Prepare config for container recreation
         const config = instance.config as any;
-        const envAnthropicToken = process.env.ANTHROPIC_AUTH_TOKEN;
-        const resolvedAuthToken = config.authToken || envAnthropicToken;
+        const envGoogleApiKey = process.env.GOOGLE_API_KEY;
+        const resolvedAuthToken = config.authToken || envGoogleApiKey;
         const instanceConfig = {
           instanceId: instance.id.toString(),
           name: instance.name,
