@@ -12,6 +12,7 @@
     "format": "prettier --write .",
     "test": "bun --filter @kredo/server test",
     "db:push": "bun --filter @kredo/server db:push",
+    "db:studio": "bun --filter @kredo/db studio",
     "build:client": "bun --filter @kredo/client build",
     "build:server": "bun --filter @kredo/server build",
     "start:client": "bun --filter @kredo/client start",

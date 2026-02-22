@@ -88,8 +88,6 @@ export default function SetupPage() {
   const [showPlatformDetails, setShowPlatformDetails] = useState(false);
   const [showDeployHoldNotice, setShowDeployHoldNotice] = useState(false);
 
-  const storageKey = user ? `openclaw.setup.${user.id}` : null;
-
   const [config, setConfig] = useState<SetupConfig>({
     instanceName: '',
     description: '',
@@ -160,56 +158,6 @@ export default function SetupPage() {
       }));
     }
   }, [config.instanceName, defaultInstanceName, isLoaded, user]);
-
-  useEffect(() => {
-    if (!isLoaded || !user || !storageKey) return;
-    const raw = window.localStorage.getItem(storageKey);
-    if (!raw) return;
-    try {
-      const parsed = JSON.parse(raw) as Partial<{
-        currentStep: SetupStep;
-        config: Partial<SetupConfig>;
-        createdInstanceId: number | null;
-      }>;
-      if (parsed?.config) {
-        setConfig((prev) => ({ ...prev, ...parsed.config }));
-      }
-      if (typeof parsed?.createdInstanceId === 'number') {
-        setCreatedInstanceId(parsed.createdInstanceId);
-      }
-      if (parsed?.currentStep) {
-        const hasAnyPlatform =
-          !!parsed.config?.matrixEnabled ||
-          !!parsed.config?.discordEnabled ||
-          !!parsed.config?.slackEnabled ||
-          !!parsed.config?.telegramEnabled ||
-          !!parsed.config?.whatsappEnabled;
-        let nextStep = parsed.currentStep as SetupStep;
-        if (parsed.currentStep === 1 && hasAnyPlatform) {
-          nextStep = 2;
-        } else if (parsed.currentStep === 2 && parsed.createdInstanceId) {
-          nextStep = 3;
-        } else if (parsed.currentStep === 3) {
-          nextStep = 4;
-        }
-        setCurrentStep(nextStep);
-      }
-    } catch {
-      // Ignore corrupted or legacy saved state.
-    }
-  }, [isLoaded, storageKey, user]);
-
-  useEffect(() => {
-    if (!isLoaded || !user || !storageKey) return;
-    window.localStorage.setItem(
-      storageKey,
-      JSON.stringify({
-        currentStep,
-        config,
-        createdInstanceId,
-      })
-    );
-  }, [config, createdInstanceId, currentStep, isLoaded, storageKey, user]);
 
   useEffect(() => {
     if (!statusQuery.data) return;
