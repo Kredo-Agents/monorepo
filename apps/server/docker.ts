@@ -141,6 +141,7 @@ async function generateOpenClawConfig(
       bind: "lan", // Allow host access via published port
       controlUi: {
         allowInsecureAuth: true,
+        dangerouslyDisableDeviceAuth: true,
       },
       tailscale: {
         mode: "off",
@@ -430,7 +431,7 @@ export async function createInstance(config: InstanceConfig) {
       },
       HostConfig: {
         PortBindings: {
-          "18789/tcp": [{ HostPort: config.port.toString() }],
+          "18789/tcp": [{ HostPort: config.port.toString(), HostIp: "127.0.0.1" }],
         },
         Binds: [
           // Mount config directory (read-write) so gateway/doctor can persist changes
