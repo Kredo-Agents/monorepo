@@ -1,0 +1,55 @@
+name: Deploy Server to GCloud VM
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/server/**'
+      - 'packages/**'
+      - 'package.json'
+      - 'bun.lock'
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Deploy via SSH
+        uses: google-github-actions/ssh-compute@v1
+        with:
+          instance_name: ${{ secrets.GCP_INSTANCE_NAME }}
+          zone: ${{ secrets.GCP_ZONE }}
+          project: ${{ secrets.GCP_PROJECT_ID }}
+          ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
+          command: |
+            cd ~/openclaw-cloud
+
+            echo "==> Pulling latest code..."
+            git pull origin main
+
+            echo "==> Installing dependencies..."
+            bun install
+
+            echo "==> Building server..."
+            bun run build:server
+
+            echo "==> Applying database migrations..."
+            bun run db:push
+
+            echo "==> Restarting server..."
+            sudo systemctl restart kredo
+
+            echo "==> Deploy complete!"
+            pm2 status
