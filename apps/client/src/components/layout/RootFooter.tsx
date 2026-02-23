@@ -7,7 +7,7 @@ import Image from "next/image";
 export default function RootFooter() {
   const pathname = usePathname();
 
-  if (pathname.startsWith("/dashboard") || pathname.startsWith("/setup")) {
+  if (pathname.startsWith("/dashboard") || pathname.startsWith("/setup") || pathname.startsWith("/presentation")) {
     return null;
   }
 

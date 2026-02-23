@@ -189,6 +189,36 @@ button {
   animation: logo-pulse 1.6s ease-in-out infinite;
 }
 
+/* Token icon slow rotation */
+@keyframes token-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+.animate-token-spin {
+  animation: token-spin 20s linear infinite;
+}
+
+/* Subtle glow pulse for token cards */
+@keyframes glow-amber {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+  50%      { box-shadow: 0 0 24px 2px rgba(245, 158, 11, 0.08); }
+}
+@keyframes glow-sky {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0); }
+  50%      { box-shadow: 0 0 24px 2px rgba(56, 189, 248, 0.08); }
+}
+.animate-glow-amber { animation: glow-amber 4s ease-in-out infinite; }
+.animate-glow-sky   { animation: glow-sky 4s ease-in-out infinite; }
+
+/* Flow step cascade */
+@keyframes flow-step-in {
+  from { opacity: 0; transform: translateX(-12px) scale(0.95); }
+  to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+.animate-flow-step {
+  animation: flow-step-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 /* Hide scrollbar for horizontal pill strips */
 .scrollbar-none {
   -ms-overflow-style: none;

@@ -57,6 +57,74 @@ function SolanaIcon({ className = "w-6 h-6" }: { className?: string }) {
   );
 }
 
+function KredoTokenIcon({ className = "w-16 h-16" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+      <defs>
+        <linearGradient id="kredo-g" x1="20" y1="10" x2="100" y2="110" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#F59E0B" />
+          <stop offset="1" stopColor="#D97706" />
+        </linearGradient>
+        <linearGradient id="kredo-ring" x1="0" y1="0" x2="120" y2="120" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#FBBF24" stopOpacity="0.4" />
+          <stop offset="1" stopColor="#92400E" stopOpacity="0.1" />
+        </linearGradient>
+      </defs>
+      <circle cx="60" cy="60" r="56" stroke="url(#kredo-ring)" strokeWidth="2" />
+      <circle cx="60" cy="60" r="44" fill="url(#kredo-g)" fillOpacity="0.12" />
+      {/* Key shape */}
+      <circle cx="60" cy="42" r="14" stroke="#F59E0B" strokeWidth="3.5" fill="none" />
+      <circle cx="60" cy="42" r="6" fill="#F59E0B" fillOpacity="0.3" />
+      <rect x="58" y="56" width="4" height="30" rx="2" fill="#F59E0B" />
+      <rect x="62" y="72" width="10" height="3.5" rx="1.5" fill="#F59E0B" />
+      <rect x="62" y="64" width="7" height="3.5" rx="1.5" fill="#F59E0B" />
+    </svg>
+  );
+}
+
+function SigilTokenIcon({ className = "w-16 h-16" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+      <defs>
+        <linearGradient id="sigil-g" x1="20" y1="10" x2="100" y2="110" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#38BDF8" />
+          <stop offset="1" stopColor="#0EA5E9" />
+        </linearGradient>
+        <linearGradient id="sigil-ring" x1="0" y1="0" x2="120" y2="120" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#7DD3FC" stopOpacity="0.4" />
+          <stop offset="1" stopColor="#0369A1" stopOpacity="0.1" />
+        </linearGradient>
+      </defs>
+      <circle cx="60" cy="60" r="56" stroke="url(#sigil-ring)" strokeWidth="2" />
+      <circle cx="60" cy="60" r="44" fill="url(#sigil-g)" fillOpacity="0.12" />
+      {/* Hexagon */}
+      <polygon
+        points="60,22 90,38 90,70 60,86 30,70 30,38"
+        stroke="#38BDF8" strokeWidth="3" fill="none" strokeLinejoin="round"
+      />
+      {/* Inner neural pattern */}
+      <circle cx="60" cy="46" r="4" fill="#38BDF8" fillOpacity="0.6" />
+      <circle cx="47" cy="58" r="3" fill="#38BDF8" fillOpacity="0.4" />
+      <circle cx="73" cy="58" r="3" fill="#38BDF8" fillOpacity="0.4" />
+      <circle cx="60" cy="70" r="3.5" fill="#38BDF8" fillOpacity="0.5" />
+      <line x1="60" y1="50" x2="49" y2="56" stroke="#38BDF8" strokeWidth="1.5" strokeOpacity="0.5" />
+      <line x1="60" y1="50" x2="71" y2="56" stroke="#38BDF8" strokeWidth="1.5" strokeOpacity="0.5" />
+      <line x1="49" y1="60" x2="58" y2="68" stroke="#38BDF8" strokeWidth="1.5" strokeOpacity="0.5" />
+      <line x1="71" y1="60" x2="62" y2="68" stroke="#38BDF8" strokeWidth="1.5" strokeOpacity="0.5" />
+      {/* Flame at bottom — burn metaphor */}
+      <path d="M55 76 C55 72, 60 68, 60 64 C60 68, 65 72, 65 76 C65 79, 62 81, 60 81 C58 81, 55 79, 55 76Z" fill="#38BDF8" fillOpacity="0.3" />
+    </svg>
+  );
+}
+
+function TokenFlowArrow() {
+  return (
+    <svg viewBox="0 0 40 24" fill="none" className="w-8 h-5 text-zinc-600 shrink-0 hidden sm:block">
+      <path d="M2 12h32m0 0l-6-6m6 6l-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 /* ------------------------------------------------------------------ */
 /* Animation primitives                                                  */
 /* ------------------------------------------------------------------ */
@@ -779,13 +847,13 @@ export default function Home() {
               <Reveal><SectionLabel>Business Model</SectionLabel></Reveal>
               <Reveal delay={100}>
                 <h2 className="text-3xl sm:text-4xl md:text-6xl font-bold text-white mb-4 leading-tight">
-                  Pay for what you use.<br />Nothing more.
+                  Burn SIGIL or pay USDC.<br />No subscriptions.
                 </h2>
               </Reveal>
               <Reveal delay={200}>
                 <p className="text-zinc-500 text-sm md:text-base mb-10 md:mb-16 max-w-lg leading-relaxed">
-                  No monthly subscriptions. Credits bought with USDC on Solana,
-                  spent as you go.
+                  Two ways to get AI credits: burn SIGIL tokens you minted from locked KREDO,
+                  or pay USDC directly. Either way, you only pay for what you use.
                 </p>
               </Reveal>
 
@@ -799,7 +867,8 @@ export default function Home() {
                       {[
                         { label: "0.1 credits", desc: "per chat message sent to your agent" },
                         { label: "5 credits", desc: "per day your agent instance is running" },
-                        { label: "USDC on Solana", desc: "how you buy credits, via Helio. No bank required." },
+                        { label: "Burn SIGIL", desc: "mint from locked KREDO or buy on DEX, then burn for credits" },
+                        { label: "Pay USDC", desc: "buy credits directly via Helio on Solana. No tokens required." },
                         { label: "No lock-in", desc: "self-host for free, or top up anytime on cloud" },
                       ].map((row) => (
                         <li key={row.label} className="flex flex-col sm:flex-row sm:gap-4 gap-0.5">
@@ -818,7 +887,8 @@ export default function Home() {
                     </div>
                     <ul className="space-y-5">
                       {[
-                        { title: "Cloud credits", desc: "Managed hosting for users who don't want to self-host. Pay only for what's consumed." },
+                        { title: "SIGIL burns", desc: "KREDO holders lock, mint SIGIL, and burn it for credits. Or sell it to users who burn it themselves. Every burn is demand." },
+                        { title: "USDC credit purchases", desc: "Non-holders pay cash for the same AI. This external revenue funds GPU infrastructure and backs the entire system." },
                         { title: "Enterprise self-hosted", desc: "Custom pricing for teams deploying at scale with SLAs and dedicated infra." },
                       ].map((s) => (
                         <li key={s.title}>
@@ -839,12 +909,295 @@ export default function Home() {
                   <div>
                     <div className="text-white font-semibold text-sm mb-1">Built on Solana</div>
                     <div className="text-zinc-500 text-sm leading-relaxed">
-                      Payments settle via Helio using USDC. Fast, permissionless,
-                      global. Anyone can top up without a bank account.
+                      SIGIL and KREDO are SPL tokens. USDC payments settle via Helio.
+                      Fast, permissionless, global. No bank account needed.
                     </div>
                   </div>
                 </Card>
               </Reveal>
+            </div>
+          </InsightSection>
+
+          {/* ── Token System ─────────────────────────────────────────── */}
+          <InsightSection id="tokens">
+            <div className="max-w-5xl mx-auto">
+              <Reveal><SectionLabel>Introducing SIGIL</SectionLabel></Reveal>
+              <Reveal delay={100}>
+                <h2 className="text-3xl sm:text-4xl md:text-6xl font-bold text-white mb-4 leading-tight">
+                  Own your AI.<br />Forever.
+                </h2>
+              </Reveal>
+              <Reveal delay={200}>
+                <p className="text-zinc-400 text-sm md:text-base max-w-lg leading-relaxed mb-10 md:mb-16">
+                  Stop renting intelligence. SIGIL is tokenized AI compute on Solana.
+                  Burn SIGIL, get AI credits on Kredo: chat, agents, workflows, API.
+                  No subscriptions. No expiration. Intelligence becomes an asset.
+                </p>
+              </Reveal>
+
+              {/* Two token cards */}
+              <div className="grid sm:grid-cols-2 gap-4 mb-4">
+                <Reveal delay={300} className="h-full">
+                  <Card className="h-full relative overflow-hidden animate-glow-amber">
+                    <div className="absolute top-4 right-4 opacity-20 animate-token-spin">
+                      <KredoTokenIcon className="w-20 h-20" />
+                    </div>
+                    <div className="relative z-10">
+                      <div className="flex items-center gap-3 mb-4">
+                        <KredoTokenIcon className="w-10 h-10" />
+                        <div>
+                          <h3 className="text-amber-400 font-bold text-lg">KREDO</h3>
+                          <p className="text-zinc-500 text-xs">The Key</p>
+                        </div>
+                      </div>
+                      <p className="text-zinc-400 text-sm leading-relaxed mb-5">
+                        The base asset. 1 billion fixed supply, fair launched on Pump.fun.
+                        No inflation, no VCs, no insider allocations.
+                      </p>
+                      <ul className="space-y-2.5">
+                        {[
+                          "Lock staked KREDO to mint SIGIL",
+                          "The only way new SIGIL enters circulation",
+                          "Continues earning staking yield while locked",
+                          "Unlock anytime by returning equivalent SIGIL",
+                        ].map((item) => (
+                          <li key={item} className="flex items-start gap-2.5">
+                            <span className="w-1 h-1 rounded-full bg-amber-500 mt-2 shrink-0" />
+                            <span className="text-zinc-400 text-xs leading-relaxed">{item}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </Card>
+                </Reveal>
+
+                <Reveal delay={400} className="h-full">
+                  <Card className="h-full relative overflow-hidden animate-glow-sky">
+                    <div className="absolute top-4 right-4 opacity-20 animate-token-spin">
+                      <SigilTokenIcon className="w-20 h-20" />
+                    </div>
+                    <div className="relative z-10">
+                      <div className="flex items-center gap-3 mb-4">
+                        <SigilTokenIcon className="w-10 h-10" />
+                        <div>
+                          <h3 className="text-sky-400 font-bold text-lg">SIGIL</h3>
+                          <p className="text-zinc-500 text-xs">The Intelligence</p>
+                        </div>
+                      </div>
+                      <p className="text-zinc-400 text-sm leading-relaxed mb-5">
+                        What powers your AI. An SPL token: tradeable, transferable,
+                        composable. Permanently destroyed every time someone buys credits.
+                      </p>
+                      <ul className="space-y-2.5">
+                        {[
+                          "Burn for AI credits: chat, agents, workflows, API",
+                          "Trade on any Solana DEX",
+                          "Only created by locking KREDO",
+                          "Constant demand, constant destruction",
+                        ].map((item) => (
+                          <li key={item} className="flex items-start gap-2.5">
+                            <span className="w-1 h-1 rounded-full bg-sky-400 mt-2 shrink-0" />
+                            <span className="text-zinc-400 text-xs leading-relaxed">{item}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </Card>
+                </Reveal>
+              </div>
+
+              {/* Mint/Burn Flow Diagram */}
+              <Reveal delay={500}>
+                <Card className="overflow-hidden">
+                  <div className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-6">
+                    The Cycle
+                  </div>
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-2 py-2">
+                    {[
+                      { label: "Stake KREDO", sub: "on kredo.cc", color: "text-amber-400", bg: "bg-amber-500/10 border-amber-500/20" },
+                      { label: "Lock sKREDO", sub: "mint SIGIL", color: "text-amber-400", bg: "bg-amber-500/10 border-amber-500/20" },
+                      { label: "Use SIGIL", sub: "burn or sell", color: "text-sky-400", bg: "bg-sky-500/10 border-sky-500/20" },
+                      { label: "AI Credits", sub: "chat · agents · API", color: "text-emerald-400", bg: "bg-emerald-500/10 border-emerald-500/20" },
+                    ].map((step, i) => (
+                      <div key={step.label} className="contents">
+                        {i > 0 && <TokenFlowArrow />}
+                        {i > 0 && (
+                          <svg viewBox="0 0 24 40" fill="none" className="w-5 h-8 text-zinc-600 shrink-0 sm:hidden">
+                            <path d="M12 2v32m0 0l-6-6m6 6l6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        )}
+                        <div
+                          className={`flex-1 w-full sm:w-auto rounded-xl border ${step.bg} px-4 py-3 text-center animate-flow-step`}
+                          style={{ animationDelay: `${i * 150}ms` }}
+                        >
+                          <div className={`font-semibold text-sm ${step.color}`}>{step.label}</div>
+                          <div className="text-zinc-500 text-xs mt-0.5">{step.sub}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              </Reveal>
+            </div>
+          </InsightSection>
+
+          {/* ── Token Paths ───────────────────────────────────────────── */}
+          <InsightSection>
+            <div className="max-w-5xl mx-auto">
+              <Reveal><SectionLabel>Three Paths to AI</SectionLabel></Reveal>
+              <Reveal delay={100}>
+                <h2 className="text-3xl sm:text-4xl md:text-6xl font-bold text-white mb-4 leading-tight">
+                  Choose how<br />you pay.
+                </h2>
+              </Reveal>
+              <Reveal delay={200}>
+                <p className="text-zinc-400 text-sm md:text-base max-w-lg leading-relaxed mb-10 md:mb-16">
+                  Hold KREDO and mint your own compute. Buy SIGIL on the open market.
+                  Or just pay USDC directly. No tokens required.
+                </p>
+              </Reveal>
+
+              <div className="grid sm:grid-cols-3 gap-4 mb-6">
+                {[
+                  {
+                    path: "Lock KREDO",
+                    how: "Stake → Lock → Mint SIGIL → Burn or Sell",
+                    who: "KREDO holders monetizing their position",
+                    color: "amber",
+                    icon: <KredoTokenIcon className="w-8 h-8" />,
+                  },
+                  {
+                    path: "Buy SIGIL",
+                    how: "Buy on DEX → Burn for AI credits",
+                    who: "Users who want AI without holding KREDO",
+                    color: "sky",
+                    icon: <SigilTokenIcon className="w-8 h-8" />,
+                  },
+                  {
+                    path: "Buy Credits",
+                    how: "Pay USDC on kredo.cc",
+                    who: "Users who just want AI, no tokens at all",
+                    color: "emerald",
+                    icon: <SolanaIcon className="w-6 h-6" />,
+                  },
+                ].map((p, i) => (
+                  <Reveal key={p.path} delay={300 + i * 100} className="h-full">
+                    <Card className="h-full transition-transform duration-300 hover:-translate-y-1 hover:border-zinc-700">
+                      <div className="mb-4">{p.icon}</div>
+                      <h3 className={`font-bold text-base mb-2 ${p.color === "amber" ? "text-amber-400" : p.color === "sky" ? "text-sky-400" : "text-emerald-400"}`}>
+                        {p.path}
+                      </h3>
+                      <p className="text-zinc-300 text-sm mb-3">{p.how}</p>
+                      <p className="text-zinc-500 text-xs leading-relaxed">{p.who}</p>
+                    </Card>
+                  </Reveal>
+                ))}
+              </div>
+
+              <Reveal delay={600}>
+                <Card>
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                    <div className="shrink-0">
+                      <div className="w-10 h-10 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+                        <span className="text-emerald-400 text-lg font-bold">$</span>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-white font-semibold text-sm mb-1">External revenue backs the system</div>
+                      <div className="text-zinc-500 text-sm leading-relaxed">
+                        USDC credit purchases from non-holders fund the AI infrastructure.
+                        This is real revenue from real users, not emissions, not reflexive tokenomics.
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              </Reveal>
+            </div>
+          </InsightSection>
+
+          {/* ── Game Theory ───────────────────────────────────────────── */}
+          <InsightSection>
+            <div className="max-w-5xl mx-auto">
+              <Reveal><SectionLabel>Game Theory</SectionLabel></Reveal>
+              <Reveal delay={100}>
+                <h2 className="text-3xl sm:text-4xl md:text-6xl font-bold text-white mb-4 leading-tight">
+                  The (3,3) move<br />is clear.
+                </h2>
+              </Reveal>
+              <Reveal delay={200}>
+                <p className="text-zinc-400 text-sm md:text-base max-w-lg leading-relaxed mb-10 md:mb-16">
+                  Stake, lock, and mint. No infinite emissions, value comes from
+                  outside the system, and locking has real utility. KREDO supply is fixed at 1B. Period.
+                </p>
+              </Reveal>
+
+              {/* Token details table */}
+              <Reveal delay={300}>
+                <Card className="mb-4 overflow-x-auto">
+                  <div className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-5">
+                    Token Details
+                  </div>
+                  <div className="min-w-[480px]">
+                    <div className="grid grid-cols-3 gap-4 pb-3 border-b border-zinc-800 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+                      <div />
+                      <div className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-amber-500" /> KREDO</div>
+                      <div className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-sky-400" /> SIGIL</div>
+                    </div>
+                    {[
+                      { label: "Role", kredo: "Base asset", sigil: "AI compute credits" },
+                      { label: "Supply", kredo: "1B fixed (Pump.fun)", sigil: "Minted from locked KREDO, burned on use" },
+                      { label: "How to get", kredo: "Buy on DEX", sigil: "Lock KREDO to mint, or buy on DEX" },
+                      { label: "Utility", kredo: "Lock → mint SIGIL", sigil: "Burn → AI credits" },
+                      { label: "Unlock", kredo: "Burn equivalent SIGIL → get KREDO back", sigil: "Permanently destroyed on use" },
+                    ].map((row) => (
+                      <div key={row.label} className="grid grid-cols-3 gap-4 py-3 border-b border-zinc-800/50 last:border-0">
+                        <div className="text-zinc-500 text-xs font-medium">{row.label}</div>
+                        <div className="text-zinc-300 text-xs">{row.kredo}</div>
+                        <div className="text-zinc-300 text-xs">{row.sigil}</div>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              </Reveal>
+
+              {/* Why it works */}
+              <div className="grid sm:grid-cols-3 gap-4">
+                <Reveal delay={400} className="h-full">
+                  <Card className="h-full transition-transform duration-300 hover:-translate-y-1 hover:border-zinc-700">
+                    <div className="w-10 h-10 rounded-xl mb-4 flex items-center justify-center bg-amber-500/10 border border-amber-500/20">
+                      <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5">
+                        <circle cx="12" cy="12" r="9" stroke="#F59E0B" strokeWidth="2" />
+                        <line x1="7" y1="7" x2="17" y2="17" stroke="#F59E0B" strokeWidth="2" strokeLinecap="round" />
+                      </svg>
+                    </div>
+                    <h3 className="text-white font-semibold text-sm md:text-base mb-2">No infinite emissions</h3>
+                    <p className="text-zinc-400 text-sm leading-relaxed">KREDO supply is fixed at 1B. No inflation, no dilution. The value of your position never gets printed away.</p>
+                  </Card>
+                </Reveal>
+                <Reveal delay={500} className="h-full">
+                  <Card className="h-full transition-transform duration-300 hover:-translate-y-1 hover:border-zinc-700">
+                    <div className="w-10 h-10 rounded-xl mb-4 flex items-center justify-center bg-emerald-500/10 border border-emerald-500/20">
+                      <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5">
+                        <path d="M7 17L17 7" stroke="#34D399" strokeWidth="2" strokeLinecap="round" />
+                        <path d="M10 7h7v7" stroke="#34D399" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </div>
+                    <h3 className="text-white font-semibold text-sm md:text-base mb-2">Value from outside</h3>
+                    <p className="text-zinc-400 text-sm leading-relaxed">USDC from non-holders buying credits + DEX demand for SIGIL from AI users. Real revenue, not circular.</p>
+                  </Card>
+                </Reveal>
+                <Reveal delay={600} className="h-full">
+                  <Card className="h-full transition-transform duration-300 hover:-translate-y-1 hover:border-zinc-700">
+                    <div className="w-10 h-10 rounded-xl mb-4 flex items-center justify-center bg-sky-500/10 border border-sky-500/20">
+                      <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5">
+                        <path d="M13 2L4.09 12.63a1 1 0 00.78 1.62H11l-1 7.75L19.91 11.37a1 1 0 00-.78-1.62H13l1-7.75z" stroke="#38BDF8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </div>
+                    <h3 className="text-white font-semibold text-sm md:text-base mb-2">Locking has real utility</h3>
+                    <p className="text-zinc-400 text-sm leading-relaxed">You&apos;re minting SIGIL that people burn every day for AI access. Constant demand, constant destruction.</p>
+                  </Card>
+                </Reveal>
+              </div>
             </div>
           </InsightSection>
 
@@ -978,6 +1331,7 @@ export default function Home() {
               <Reveal delay={350}>
                 <div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-6 mt-10 md:mt-12 text-zinc-600 text-xs">
                   <span>◎ Pay with USDC on Solana</span>
+                  <span>· Burn SIGIL for credits</span>
                   <span>· Self-host for free</span>
                   <span>· Open source</span>
                 </div>
