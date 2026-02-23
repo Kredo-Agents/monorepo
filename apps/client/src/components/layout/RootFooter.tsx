@@ -7,12 +7,12 @@ import Image from "next/image";
 export default function RootFooter() {
   const pathname = usePathname();
 
-  if (pathname.startsWith("/dashboard")) {
+  if (pathname.startsWith("/dashboard") || pathname.startsWith("/setup") || pathname.startsWith("/presentation")) {
     return null;
   }
 
   return (
-    <footer className="border-t border-zinc-200 dark:border-zinc-800 mt-auto">
+    <footer className="border-t border-zinc-200 dark:border-zinc-800 mt-auto safe-area-bottom safe-area-left safe-area-right">
       <div className="max-w-7xl mx-auto px-6 py-12">
         {/* Main footer content */}
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-10">
@@ -71,6 +71,14 @@ export default function RootFooter() {
                 className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors"
               >
                 pump.fun
+              </a>
+              <a
+                href="https://t.me/trykredo"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors"
+              >
+                Telegram
               </a>
             </nav>
           </div>

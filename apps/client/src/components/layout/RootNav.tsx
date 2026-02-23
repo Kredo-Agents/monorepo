@@ -10,12 +10,12 @@ export default function RootNav() {
   const { isSignedIn } = useAuth();
   const { openSignIn } = useClerk();
 
-  if (pathname.startsWith("/dashboard")) {
+  if (pathname.startsWith("/dashboard") || pathname.startsWith("/setup") || pathname.startsWith("/presentation")) {
     return null;
   }
 
   return (
-    <nav className="border-b border-zinc-200 dark:border-zinc-800">
+    <nav className="border-b border-zinc-200 dark:border-zinc-800 safe-area-top safe-area-left safe-area-right">
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
         <div className="flex items-end gap-2">
           <Image src="/logo-footer.png" alt="Kredo" width={120} height={40} className="h-8 w-auto" />

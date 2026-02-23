@@ -29,6 +29,96 @@ button {
   cursor: pointer;
 }
 
+/* Safe area padding for notched devices */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.safe-area-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+.safe-area-left {
+  padding-left: env(safe-area-inset-left, 0px);
+}
+.safe-area-right {
+  padding-right: env(safe-area-inset-right, 0px);
+}
+
+/* Prevent overscroll bounce on mobile for app-like feel */
+@media (max-width: 767px) {
+  html, body {
+    overscroll-behavior: none;
+  }
+  /* Prevent text selection on nav elements */
+  nav a, nav button {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    user-select: none;
+  }
+  /* Fixed-position chat container that fills mobile viewport above the nav bar */
+  .chat-fixed-mobile {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    /* 56px nav height + 12px nav margin-bottom + 12px gap */
+    bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+    z-index: 10;
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+}
+
+/* PWA standalone mode — remove tap highlights, prevent callouts */
+@media (display-mode: standalone) {
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+  a, button, [role="button"] {
+    -webkit-touch-callout: none;
+    user-select: none;
+  }
+  html, body {
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Setup page: fullscreen immersive feel */
+.setup-page {
+  min-height: 100dvh;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+}
+
+/* iOS: prevent zoom on input focus (font < 16px triggers zoom) */
+@supports (-webkit-touch-callout: none) {
+  .setup-page input,
+  .setup-page textarea,
+  .setup-page select {
+    font-size: 16px !important;
+  }
+}
+
+/* Active press state for touch buttons */
+.touch-btn:active {
+  transform: scale(0.97);
+  transition: transform 0.1s ease;
+}
+
+/* Step transition slide */
+@keyframes step-enter {
+  from { opacity: 0; transform: translateX(20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes step-exit {
+  from { opacity: 1; transform: translateX(0); }
+  to   { opacity: 0; transform: translateX(-20px); }
+}
+.animate-step-enter {
+  animation: step-enter 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 @keyframes dot-wave {
   0%,
   60%,
@@ -88,5 +178,53 @@ button {
 
 .animate-hero-in {
   animation: hero-in 0.75s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes logo-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.92); }
+}
+
+.animate-logo-pulse {
+  animation: logo-pulse 1.6s ease-in-out infinite;
+}
+
+/* Token icon slow rotation */
+@keyframes token-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+.animate-token-spin {
+  animation: token-spin 20s linear infinite;
+}
+
+/* Subtle glow pulse for token cards */
+@keyframes glow-amber {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+  50%      { box-shadow: 0 0 24px 2px rgba(245, 158, 11, 0.08); }
+}
+@keyframes glow-sky {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0); }
+  50%      { box-shadow: 0 0 24px 2px rgba(56, 189, 248, 0.08); }
+}
+.animate-glow-amber { animation: glow-amber 4s ease-in-out infinite; }
+.animate-glow-sky   { animation: glow-sky 4s ease-in-out infinite; }
+
+/* Flow step cascade */
+@keyframes flow-step-in {
+  from { opacity: 0; transform: translateX(-12px) scale(0.95); }
+  to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+.animate-flow-step {
+  animation: flow-step-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Hide scrollbar for horizontal pill strips */
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
 }
 
