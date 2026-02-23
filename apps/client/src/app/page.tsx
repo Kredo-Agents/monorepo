@@ -510,7 +510,7 @@ export default function Home() {
 
       {/* ── Floating read-more button ────────────────────────────────── */}
       {!showInsight && (
-        <div className="sticky bottom-8 flex justify-center z-50 pointer-events-none pb-4 animate-hero-in" style={{ animationDelay: "800ms" }}>
+        <div className="sticky bottom-8 flex justify-center z-50 pointer-events-none pb-4 animate-hero-in" style={{ animationDelay: "800ms", paddingBottom: "calc(1rem + env(safe-area-inset-bottom, 0px))" }}>
           <button
             onClick={handleReadMore}
             className="pointer-events-auto flex flex-col items-center gap-1.5 group"

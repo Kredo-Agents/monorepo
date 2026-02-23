@@ -12,7 +12,7 @@ export default function RootFooter() {
   }
 
   return (
-    <footer className="border-t border-zinc-200 dark:border-zinc-800 mt-auto">
+    <footer className="border-t border-zinc-200 dark:border-zinc-800 mt-auto safe-area-bottom safe-area-left safe-area-right">
       <div className="max-w-7xl mx-auto px-6 py-12">
         {/* Main footer content */}
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-10">

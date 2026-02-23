@@ -157,7 +157,7 @@ export default function AutomationsPage() {
   // ── Render ───────────────────────────────────────────────────────────────
 
   return (
-    <div className="max-w-4xl mx-auto px-4 md:px-6 pt-2 pb-6 md:py-12 md:mt-4 animate-fade-in">
+    <div className="max-w-4xl mx-auto px-4 md:px-6 pt-14 pb-24 md:pt-12 md:pb-12 md:mt-4 animate-fade-in min-h-[calc(100dvh-10rem)] flex flex-col">
 
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
@@ -184,12 +184,12 @@ export default function AutomationsPage() {
 
       {/* Loading */}
       {Boolean(instanceId) && isLoading && (
-        <LogoLoader text="Loading automations..." className="py-12" />
+        <LogoLoader text="Loading automations..." className="py-12 my-auto" />
       )}
 
       {/* Empty state */}
       {Boolean(instanceId) && !isLoading && jobs?.length === 0 && (
-        <div className="rounded-2xl border border-zinc-200/70 dark:border-zinc-800/70 bg-white dark:bg-zinc-900/40 p-8 sm:p-10 text-center">
+        <div className="rounded-2xl border border-zinc-200/70 dark:border-zinc-800/70 bg-white dark:bg-zinc-900/40 p-8 sm:p-10 text-center my-auto">
           <CalendarClock className="h-8 w-8 mx-auto mb-3 text-zinc-400 dark:text-zinc-600" aria-hidden="true" />
           <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">No automations yet</p>
           <p className="text-sm text-zinc-500 dark:text-zinc-500 mt-1">Create one to have your assistant run tasks on a schedule.</p>

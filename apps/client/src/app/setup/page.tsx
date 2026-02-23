@@ -87,7 +87,7 @@ export default function SetupPage() {
   const [pairingCode, setPairingCode] = useState('');
   const [pairingError, setPairingError] = useState<string | null>(null);
   const [pairingSuccess, setPairingSuccess] = useState<string | null>(null);
-  const [showPlatformDetails, setShowPlatformDetails] = useState(false);
+  const [showPlatformDetails, setShowPlatformDetails] = useState(true);
   const [showDeployHoldNotice, setShowDeployHoldNotice] = useState(false);
 
   const [config, setConfig] = useState<SetupConfig>({
@@ -105,7 +105,7 @@ export default function SetupPage() {
     slackEnabled: false,
     slackBotToken: '',
     slackAppToken: '',
-    telegramEnabled: false,
+    telegramEnabled: true,
     telegramBotToken: '',
     telegramChatId: '',
     whatsappEnabled: false,
@@ -247,7 +247,7 @@ export default function SetupPage() {
 
   const steps = [
     { id: 1, title: 'Welcome', description: 'Name your assistant' },
-    { id: 2, title: 'Connected App', description: 'Pick one app to connect' },
+    { id: 2, title: 'Telegram', description: 'Connect your Telegram bot' },
     { id: 3, title: 'Deploy', description: 'Review and launch' },
     ...(showPairingStep ? [{ id: 4, title: 'Pairing', description: 'Connect your account' }] : []),
   ];
@@ -552,7 +552,7 @@ export default function SetupPage() {
                     }
                     setCurrentStep((currentStep + 1) as SetupStep);
                   }}
-                  disabled={currentStep === 1 && !canProceedToStep2}
+                  disabled={(currentStep === 1 && !canProceedToStep2) || (currentStep === 2 && !config.telegramBotToken.trim())}
                   className="touch-btn flex-[2] sm:flex-none sm:w-auto px-5 sm:px-6 py-3.5 text-sm font-semibold text-white bg-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 rounded-xl hover:bg-zinc-800 dark:hover:bg-white transition-all disabled:opacity-50 disabled:cursor-not-allowed select-none"
                 >
                   {currentStep === 1 ? 'Get started' : 'Continue'}
@@ -600,7 +600,7 @@ function Step3Platforms({
       matrixEnabled: false,
       discordEnabled: false,
       slackEnabled: false,
-      telegramEnabled: false,
+      telegramEnabled: true,
       whatsappEnabled: false,
     };
     if (!enabled) {
@@ -637,13 +637,10 @@ function Step3Platforms({
     <div className="space-y-5 sm:space-y-8 animate-in fade-in duration-500">
       <div className="text-center">
         <h2 className="text-xl sm:text-3xl font-semibold text-zinc-900 dark:text-zinc-50 mb-1.5 sm:mb-2">
-          Connect an app
+          Connect Telegram
         </h2>
         <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1.5 sm:mt-2">
-          Your agent will reach you there
-        </p>
-        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1.5 sm:mt-2">
-          You can also talk to it directly in the app.
+          Your agent will reach you there. A Telegram bot token is required.
         </p>
       </div>
 
