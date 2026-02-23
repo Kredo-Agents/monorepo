@@ -8,9 +8,12 @@ import {
   ChevronUp,
   Play,
   Plus,
+  Power,
+  PowerOff,
   Trash2,
   X,
 } from 'lucide-react';
+import LogoLoader from '@/components/LogoLoader';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -154,25 +157,26 @@ export default function AutomationsPage() {
   // ── Render ───────────────────────────────────────────────────────────────
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-12 mt-4">
+    <div className="max-w-4xl mx-auto px-4 md:px-6 pt-2 pb-6 md:py-12 md:mt-4 animate-fade-in">
 
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8">
+      <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-zinc-900 dark:text-zinc-50">
             Automations
           </h1>
-          <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-2">
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
             Schedule tasks your assistant runs automatically.
           </p>
         </div>
         {Boolean(instanceId) && (
           <button
             onClick={() => { setWizard(defaultWizard); setWizardOpen(true); }}
-            className="inline-flex items-center gap-2 rounded-lg bg-zinc-900 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-700 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200 transition-colors"
+            className="shrink-0 inline-flex items-center gap-2 rounded-xl bg-zinc-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-zinc-700 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200 active:scale-[0.97] transition-all min-h-[44px]"
           >
             <Plus className="h-4 w-4" aria-hidden="true" />
-            New automation
+            <span className="hidden sm:inline">New automation</span>
+            <span className="sm:hidden">New</span>
           </button>
         )}
       </div>
@@ -180,18 +184,18 @@ export default function AutomationsPage() {
 
       {/* Loading */}
       {Boolean(instanceId) && isLoading && (
-        <div className="text-sm text-zinc-600 dark:text-zinc-400">Loading automations...</div>
+        <LogoLoader text="Loading automations..." className="py-12" />
       )}
 
       {/* Empty state */}
       {Boolean(instanceId) && !isLoading && jobs?.length === 0 && (
-        <div className="rounded-2xl border border-zinc-200/70 dark:border-zinc-800/70 bg-white dark:bg-zinc-900/40 p-10 text-center">
+        <div className="rounded-2xl border border-zinc-200/70 dark:border-zinc-800/70 bg-white dark:bg-zinc-900/40 p-8 sm:p-10 text-center">
           <CalendarClock className="h-8 w-8 mx-auto mb-3 text-zinc-400 dark:text-zinc-600" aria-hidden="true" />
           <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">No automations yet</p>
           <p className="text-sm text-zinc-500 dark:text-zinc-500 mt-1">Create one to have your assistant run tasks on a schedule.</p>
           <button
             onClick={() => { setWizard(defaultWizard); setWizardOpen(true); }}
-            className="mt-4 inline-flex items-center gap-2 rounded-lg bg-zinc-900 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-700 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200 transition-colors"
+            className="mt-4 inline-flex items-center gap-2 rounded-xl bg-zinc-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-zinc-700 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200 active:scale-[0.97] transition-all min-h-[44px]"
           >
             <Plus className="h-4 w-4" aria-hidden="true" />
             New automation
@@ -202,8 +206,9 @@ export default function AutomationsPage() {
       {/* Jobs list */}
       {jobs && jobs.length > 0 && (
         <div className="space-y-3">
-          {(jobs as CronJob[]).map((job) => {
+          {(jobs as CronJob[]).map((job, i) => {
             const isExpanded = expandedJob === job.jobId;
+            const isDeleting = deletingJobId === job.jobId;
             const payloadPreview = job.payload.kind === 'agentTurn'
               ? job.payload.message
               : job.payload.text;
@@ -211,13 +216,18 @@ export default function AutomationsPage() {
             return (
               <div
                 key={job.jobId}
-                className="rounded-2xl border border-zinc-200/70 dark:border-zinc-800/70 bg-white dark:bg-zinc-900/40"
+                className="rounded-2xl border border-zinc-200/70 dark:border-zinc-800/70 bg-white dark:bg-zinc-900/40 animate-fade-in"
+                style={{ animationDelay: `${Math.min(i * 50, 300)}ms` }}
               >
-                {/* Card header */}
-                <div className="flex items-center gap-4 px-5 py-4">
+                {/* Card header — tappable to expand on mobile */}
+                <button
+                  type="button"
+                  onClick={() => setExpandedJob(isExpanded ? null : job.jobId)}
+                  className="w-full text-left px-4 sm:px-5 py-4 flex items-center gap-3 sm:gap-4"
+                >
                   {/* Enabled dot */}
                   <span
-                    className={`shrink-0 h-2 w-2 rounded-full ${job.enabled ? 'bg-emerald-500' : 'bg-zinc-300 dark:bg-zinc-600'}`}
+                    className={`shrink-0 h-2.5 w-2.5 rounded-full ${job.enabled ? 'bg-emerald-500' : 'bg-zinc-300 dark:bg-zinc-600'}`}
                     title={job.enabled ? 'Enabled' : 'Disabled'}
                   />
 
@@ -226,90 +236,100 @@ export default function AutomationsPage() {
                     <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-50 truncate">
                       {job.name}
                     </p>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 truncate">
                       {humanizeSchedule(job.schedule)}
                     </p>
                   </div>
 
-                  {/* Actions */}
-                  <div className="flex items-center gap-2 shrink-0">
-                    {/* Enable / Disable toggle */}
-                    <button
-                      onClick={() => toggleMutation.mutate({ instanceId, jobId: job.jobId, enabled: !job.enabled })}
-                      disabled={toggleMutation.isPending}
-                      className="rounded-md border border-zinc-200 dark:border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100/70 dark:hover:bg-zinc-800/70 transition-colors disabled:opacity-50"
-                    >
-                      {job.enabled ? 'Disable' : 'Enable'}
-                    </button>
+                  {/* Expand chevron */}
+                  <span className="shrink-0 text-zinc-400">
+                    {isExpanded
+                      ? <ChevronUp className="h-4 w-4" aria-hidden="true" />
+                      : <ChevronDown className="h-4 w-4" aria-hidden="true" />}
+                  </span>
+                </button>
 
-                    {/* Run now */}
-                    <button
-                      onClick={() => runMutation.mutate({ instanceId, jobId: job.jobId })}
-                      disabled={runMutation.isPending}
-                      title="Run now"
-                      className="inline-flex items-center justify-center h-8 w-8 rounded-md border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100/70 dark:hover:bg-zinc-800/70 transition-colors disabled:opacity-50"
-                    >
-                      <Play className="h-3.5 w-3.5" aria-hidden="true" />
-                    </button>
-
-                    {/* Delete */}
-                    {deletingJobId === job.jobId ? (
-                      <div className="flex items-center gap-1">
-                        <button
-                          onClick={() => removeMutation.mutate({ instanceId, jobId: job.jobId })}
-                          disabled={removeMutation.isPending}
-                          className="rounded-md bg-red-600 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-red-700 transition-colors disabled:opacity-50"
-                        >
-                          Confirm
-                        </button>
-                        <button
-                          onClick={() => setDeletingJobId(null)}
-                          className="inline-flex items-center justify-center h-8 w-8 rounded-md border border-zinc-200 dark:border-zinc-700 text-zinc-500 hover:bg-zinc-100/70 dark:hover:bg-zinc-800/70 transition-colors"
-                        >
-                          <X className="h-3.5 w-3.5" aria-hidden="true" />
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => setDeletingJobId(job.jobId)}
-                        title="Delete"
-                        className="inline-flex items-center justify-center h-8 w-8 rounded-md border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-red-50 hover:text-red-600 hover:border-red-200 dark:hover:bg-red-950/30 dark:hover:text-red-400 dark:hover:border-red-800/50 transition-colors"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
-                      </button>
-                    )}
-
-                    {/* Expand toggle */}
-                    <button
-                      onClick={() => setExpandedJob(isExpanded ? null : job.jobId)}
-                      title={isExpanded ? 'Collapse' : 'Expand'}
-                      className="inline-flex items-center justify-center h-8 w-8 rounded-md border border-zinc-200 dark:border-zinc-700 text-zinc-500 hover:bg-zinc-100/70 dark:hover:bg-zinc-800/70 transition-colors"
-                    >
-                      {isExpanded
-                        ? <ChevronUp className="h-3.5 w-3.5" aria-hidden="true" />
-                        : <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Expanded detail */}
+                {/* Expanded detail + actions */}
                 {isExpanded && (
-                  <div className="border-t border-zinc-100 dark:border-zinc-800/70 px-5 py-4 space-y-3">
-                    {job.description && (
-                      <p className="text-sm text-zinc-600 dark:text-zinc-400">{job.description}</p>
-                    )}
-                    <div className="rounded-lg bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-100 dark:border-zinc-800/70 px-4 py-3">
-                      <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1">Message to assistant</p>
-                      <p className="text-sm text-zinc-800 dark:text-zinc-200 whitespace-pre-wrap">{payloadPreview}</p>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      <span className="inline-flex items-center rounded-full border border-zinc-200 dark:border-zinc-700 px-2.5 py-0.5 text-xs text-zinc-600 dark:text-zinc-400">
-                        {job.sessionTarget === 'main' ? 'Main session' : 'Isolated session'}
-                      </span>
-                      {job.deleteAfterRun && (
+                  <div className="border-t border-zinc-100 dark:border-zinc-800/70">
+                    {/* Message preview */}
+                    <div className="px-4 sm:px-5 pt-4 pb-3 space-y-3">
+                      {job.description && (
+                        <p className="text-sm text-zinc-600 dark:text-zinc-400">{job.description}</p>
+                      )}
+                      <div className="rounded-xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-100 dark:border-zinc-800/70 px-4 py-3">
+                        <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1">Message to assistant</p>
+                        <p className="text-sm text-zinc-800 dark:text-zinc-200 whitespace-pre-wrap break-words">{payloadPreview}</p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
                         <span className="inline-flex items-center rounded-full border border-zinc-200 dark:border-zinc-700 px-2.5 py-0.5 text-xs text-zinc-600 dark:text-zinc-400">
-                          Runs once then deletes
+                          {job.sessionTarget === 'main' ? 'Main session' : 'Isolated session'}
                         </span>
+                        {job.deleteAfterRun && (
+                          <span className="inline-flex items-center rounded-full border border-zinc-200 dark:border-zinc-700 px-2.5 py-0.5 text-xs text-zinc-600 dark:text-zinc-400">
+                            Runs once then deletes
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Action buttons — stacked on mobile for large touch targets */}
+                    <div className="px-4 sm:px-5 pb-4 pt-1">
+                      {isDeleting ? (
+                        /* Delete confirmation */
+                        <div className="rounded-xl border border-red-200 dark:border-red-800/50 bg-red-50 dark:bg-red-950/20 p-4">
+                          <p className="text-sm font-medium text-red-800 dark:text-red-300 mb-3">
+                            Delete "{job.name}"?
+                          </p>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => removeMutation.mutate({ instanceId, jobId: job.jobId })}
+                              disabled={removeMutation.isPending}
+                              className="flex-1 sm:flex-none rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-700 active:scale-[0.97] transition-all disabled:opacity-50 min-h-[44px]"
+                            >
+                              {removeMutation.isPending ? 'Deleting...' : 'Delete'}
+                            </button>
+                            <button
+                              onClick={() => setDeletingJobId(null)}
+                              className="flex-1 sm:flex-none rounded-xl border border-zinc-200 dark:border-zinc-700 px-4 py-2.5 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100/70 dark:hover:bg-zinc-800/70 active:scale-[0.97] transition-all min-h-[44px]"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        /* Normal actions */
+                        <div className="grid grid-cols-3 gap-2">
+                          <button
+                            onClick={() => toggleMutation.mutate({ instanceId, jobId: job.jobId, enabled: !job.enabled })}
+                            disabled={toggleMutation.isPending}
+                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-zinc-200 dark:border-zinc-700 px-3 py-2.5 text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100/70 dark:hover:bg-zinc-800/70 active:scale-[0.97] transition-all disabled:opacity-50 min-h-[44px]"
+                          >
+                            {job.enabled
+                              ? <><PowerOff className="h-4 w-4 shrink-0" aria-hidden="true" /><span className="hidden sm:inline">Disable</span></>
+                              : <><Power className="h-4 w-4 shrink-0" aria-hidden="true" /><span className="hidden sm:inline">Enable</span></>}
+                            <span className="sm:hidden">{job.enabled ? 'Disable' : 'Enable'}</span>
+                          </button>
+
+                          <button
+                            onClick={() => runMutation.mutate({ instanceId, jobId: job.jobId })}
+                            disabled={runMutation.isPending}
+                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-zinc-200 dark:border-zinc-700 px-3 py-2.5 text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100/70 dark:hover:bg-zinc-800/70 active:scale-[0.97] transition-all disabled:opacity-50 min-h-[44px]"
+                          >
+                            <Play className="h-4 w-4 shrink-0" aria-hidden="true" />
+                            <span className="hidden sm:inline">Run now</span>
+                            <span className="sm:hidden">Run</span>
+                          </button>
+
+                          <button
+                            onClick={() => setDeletingJobId(job.jobId)}
+                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-zinc-200 dark:border-zinc-700 px-3 py-2.5 text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:bg-red-50 hover:text-red-600 hover:border-red-200 dark:hover:bg-red-950/30 dark:hover:text-red-400 dark:hover:border-red-800/50 active:scale-[0.97] transition-all min-h-[44px]"
+                          >
+                            <Trash2 className="h-4 w-4 shrink-0" aria-hidden="true" />
+                            <span className="hidden sm:inline">Delete</span>
+                            <span className="sm:hidden">Delete</span>
+                          </button>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -320,9 +340,9 @@ export default function AutomationsPage() {
         </div>
       )}
 
-      {/* ── Create wizard modal ───────────────────────────────────────────── */}
+      {/* ── Create wizard ─ bottom sheet on mobile, centered modal on desktop ── */}
       {wizardOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
           {/* Backdrop */}
           <button
             type="button"
@@ -331,11 +351,16 @@ export default function AutomationsPage() {
             aria-label="Close"
           />
 
-          {/* Panel */}
-          <div className="relative w-full max-w-lg rounded-2xl border border-zinc-200/70 dark:border-zinc-800/70 bg-white dark:bg-zinc-900 shadow-xl">
+          {/* Panel — full-width bottom sheet on mobile, centered card on desktop */}
+          <div className="relative w-full sm:max-w-lg sm:mx-4 rounded-t-2xl sm:rounded-2xl border border-zinc-200/70 dark:border-zinc-800/70 bg-white dark:bg-zinc-900 shadow-xl max-h-[90dvh] overflow-y-auto overscroll-contain">
+
+            {/* Drag handle (mobile) */}
+            <div className="sm:hidden flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 rounded-full bg-zinc-300 dark:bg-zinc-700" />
+            </div>
 
             {/* Modal header */}
-            <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 px-6 py-4">
+            <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 px-5 sm:px-6 py-4">
               <div>
                 <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">New automation</h2>
                 <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">Step {wizard.step} of 2</p>
@@ -343,7 +368,7 @@ export default function AutomationsPage() {
               <button
                 type="button"
                 onClick={() => setWizardOpen(false)}
-                className="inline-flex items-center justify-center h-8 w-8 rounded-md border border-zinc-200 dark:border-zinc-700 text-zinc-500 hover:bg-zinc-100/70 dark:hover:bg-zinc-800/70 transition-colors"
+                className="inline-flex items-center justify-center h-10 w-10 rounded-xl border border-zinc-200 dark:border-zinc-700 text-zinc-500 hover:bg-zinc-100/70 dark:hover:bg-zinc-800/70 active:scale-[0.97] transition-all"
               >
                 <X className="h-4 w-4" aria-hidden="true" />
               </button>
@@ -359,7 +384,7 @@ export default function AutomationsPage() {
 
             {/* Step 1: Name + message */}
             {wizard.step === 1 && (
-              <div className="px-6 py-6 space-y-5">
+              <div className="px-5 sm:px-6 py-6 space-y-5">
                 <div>
                   <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
                     Name
@@ -369,7 +394,7 @@ export default function AutomationsPage() {
                     placeholder="e.g. Morning briefing"
                     value={wizard.name}
                     onChange={e => setWizard(w => ({ ...w, name: e.target.value }))}
-                    className="w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/60 px-3.5 py-2.5 text-sm text-zinc-900 dark:text-zinc-50 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900/20 dark:focus:ring-zinc-50/20 transition"
+                    className="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/60 px-3.5 py-3 text-[16px] sm:text-sm text-zinc-900 dark:text-zinc-50 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900/20 dark:focus:ring-zinc-50/20 transition"
                   />
                 </div>
                 <div>
@@ -381,7 +406,7 @@ export default function AutomationsPage() {
                     placeholder="e.g. Summarise the latest news and send it to me."
                     value={wizard.message}
                     onChange={e => setWizard(w => ({ ...w, message: e.target.value }))}
-                    className="w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/60 px-3.5 py-2.5 text-sm text-zinc-900 dark:text-zinc-50 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900/20 dark:focus:ring-zinc-50/20 transition resize-none"
+                    className="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/60 px-3.5 py-3 text-[16px] sm:text-sm text-zinc-900 dark:text-zinc-50 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900/20 dark:focus:ring-zinc-50/20 transition resize-none"
                   />
                 </div>
               </div>
@@ -389,13 +414,13 @@ export default function AutomationsPage() {
 
             {/* Step 2: Schedule */}
             {wizard.step === 2 && (
-              <div className="px-6 py-6 space-y-5">
+              <div className="px-5 sm:px-6 py-6 space-y-5">
                 {/* Schedule kind tabs */}
                 <div>
                   <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
                     Frequency
                   </label>
-                  <div className="flex rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden">
+                  <div className="flex rounded-xl border border-zinc-200 dark:border-zinc-700 overflow-hidden">
                     {(['every', 'at', 'cron'] as ScheduleKind[]).map((kind) => {
                       const labels = { every: 'Repeating', at: 'Once', cron: 'Custom' };
                       return (
@@ -403,10 +428,10 @@ export default function AutomationsPage() {
                           key={kind}
                           type="button"
                           onClick={() => setWizard(w => ({ ...w, scheduleKind: kind }))}
-                          className={`flex-1 py-2 text-xs font-medium transition-colors ${
+                          className={`flex-1 py-3 text-sm font-medium transition-colors ${
                             wizard.scheduleKind === kind
                               ? 'bg-zinc-900 text-white dark:bg-zinc-50 dark:text-zinc-900'
-                              : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/70'
+                              : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/70 active:bg-zinc-100 dark:active:bg-zinc-800'
                           }`}
                         >
                           {labels[kind]}
@@ -426,7 +451,7 @@ export default function AutomationsPage() {
                       type="datetime-local"
                       value={wizard.atDatetime}
                       onChange={e => setWizard(w => ({ ...w, atDatetime: e.target.value }))}
-                      className="w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/60 px-3.5 py-2.5 text-sm text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-zinc-900/20 dark:focus:ring-zinc-50/20 transition"
+                      className="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/60 px-3.5 py-3 text-[16px] sm:text-sm text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-zinc-900/20 dark:focus:ring-zinc-50/20 transition"
                     />
                   </div>
                 )}
@@ -443,12 +468,12 @@ export default function AutomationsPage() {
                         min={1}
                         value={wizard.everyAmount}
                         onChange={e => setWizard(w => ({ ...w, everyAmount: Math.max(1, Number(e.target.value)) }))}
-                        className="w-24 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/60 px-3.5 py-2.5 text-sm text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-zinc-900/20 dark:focus:ring-zinc-50/20 transition"
+                        className="w-24 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/60 px-3.5 py-3 text-[16px] sm:text-sm text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-zinc-900/20 dark:focus:ring-zinc-50/20 transition"
                       />
                       <select
                         value={wizard.everyUnit}
                         onChange={e => setWizard(w => ({ ...w, everyUnit: e.target.value as EveryUnit }))}
-                        className="flex-1 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/60 px-3.5 py-2.5 text-sm text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-zinc-900/20 dark:focus:ring-zinc-50/20 transition"
+                        className="flex-1 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/60 px-3.5 py-3 text-[16px] sm:text-sm text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-zinc-900/20 dark:focus:ring-zinc-50/20 transition"
                       >
                         <option value="minutes">minutes</option>
                         <option value="hours">hours</option>
@@ -470,7 +495,7 @@ export default function AutomationsPage() {
                         placeholder="0 9 * * 1-5"
                         value={wizard.cronExpr}
                         onChange={e => setWizard(w => ({ ...w, cronExpr: e.target.value }))}
-                        className="w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/60 px-3.5 py-2.5 text-sm font-mono text-zinc-900 dark:text-zinc-50 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900/20 dark:focus:ring-zinc-50/20 transition"
+                        className="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/60 px-3.5 py-3 text-[16px] sm:text-sm font-mono text-zinc-900 dark:text-zinc-50 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900/20 dark:focus:ring-zinc-50/20 transition"
                       />
                       <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1.5">
                         5 or 6 fields · min hour day month weekday [second]
@@ -485,7 +510,7 @@ export default function AutomationsPage() {
                         placeholder="America/New_York"
                         value={wizard.cronTz}
                         onChange={e => setWizard(w => ({ ...w, cronTz: e.target.value }))}
-                        className="w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/60 px-3.5 py-2.5 text-sm text-zinc-900 dark:text-zinc-50 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900/20 dark:focus:ring-zinc-50/20 transition"
+                        className="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/60 px-3.5 py-3 text-[16px] sm:text-sm text-zinc-900 dark:text-zinc-50 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900/20 dark:focus:ring-zinc-50/20 transition"
                       />
                     </div>
                   </div>
@@ -493,7 +518,7 @@ export default function AutomationsPage() {
 
                 {/* Preview */}
                 {step2Valid() && (
-                  <div className="rounded-lg bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-100 dark:border-zinc-800/70 px-4 py-3">
+                  <div className="rounded-xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-100 dark:border-zinc-800/70 px-4 py-3">
                     <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-0.5">Preview</p>
                     <p className="text-sm text-zinc-800 dark:text-zinc-200">
                       {humanizeSchedule(buildSchedulePreview(wizard))}
@@ -503,12 +528,12 @@ export default function AutomationsPage() {
               </div>
             )}
 
-            {/* Footer buttons */}
-            <div className="flex items-center justify-between border-t border-zinc-100 dark:border-zinc-800 px-6 py-4">
+            {/* Footer buttons — safe area padding on mobile */}
+            <div className="flex items-center justify-between border-t border-zinc-100 dark:border-zinc-800 px-5 sm:px-6 py-4 safe-area-bottom">
               <button
                 type="button"
                 onClick={() => wizard.step === 1 ? setWizardOpen(false) : setWizard(w => ({ ...w, step: 1 }))}
-                className="rounded-lg border border-zinc-200 dark:border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800/70 transition-colors"
+                className="rounded-xl border border-zinc-200 dark:border-zinc-700 px-4 py-2.5 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800/70 active:scale-[0.97] transition-all min-h-[44px]"
               >
                 {wizard.step === 1 ? 'Cancel' : 'Back'}
               </button>
@@ -518,7 +543,7 @@ export default function AutomationsPage() {
                   type="button"
                   onClick={() => setWizard(w => ({ ...w, step: 2 }))}
                   disabled={!step1Valid()}
-                  className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-700 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="rounded-xl bg-zinc-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-zinc-700 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200 active:scale-[0.97] transition-all disabled:opacity-40 disabled:cursor-not-allowed min-h-[44px]"
                 >
                   Next
                 </button>
@@ -527,16 +552,16 @@ export default function AutomationsPage() {
                   type="button"
                   onClick={handleSubmit}
                   disabled={!step2Valid() || addMutation.isPending}
-                  className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-700 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="rounded-xl bg-zinc-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-zinc-700 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200 active:scale-[0.97] transition-all disabled:opacity-40 disabled:cursor-not-allowed min-h-[44px]"
                 >
-                  {addMutation.isPending ? 'Creating…' : 'Create automation'}
+                  {addMutation.isPending ? 'Creating...' : 'Create'}
                 </button>
               )}
             </div>
 
             {/* Error */}
             {addMutation.error && (
-              <div className="px-6 pb-4 text-sm text-red-600 dark:text-red-400">
+              <div className="px-5 sm:px-6 pb-4 text-sm text-red-600 dark:text-red-400">
                 {addMutation.error.message}
               </div>
             )}

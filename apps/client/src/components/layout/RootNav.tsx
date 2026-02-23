@@ -10,7 +10,7 @@ export default function RootNav() {
   const { isSignedIn } = useAuth();
   const { openSignIn } = useClerk();
 
-  if (pathname.startsWith("/dashboard")) {
+  if (pathname.startsWith("/dashboard") || pathname.startsWith("/setup")) {
     return null;
   }
 

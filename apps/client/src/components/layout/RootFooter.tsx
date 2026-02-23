@@ -7,7 +7,7 @@ import Image from "next/image";
 export default function RootFooter() {
   const pathname = usePathname();
 
-  if (pathname.startsWith("/dashboard")) {
+  if (pathname.startsWith("/dashboard") || pathname.startsWith("/setup")) {
     return null;
   }
 
@@ -71,6 +71,14 @@ export default function RootFooter() {
                 className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors"
               >
                 pump.fun
+              </a>
+              <a
+                href="https://t.me/trykredo"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors"
+              >
+                Telegram
               </a>
             </nav>
           </div>

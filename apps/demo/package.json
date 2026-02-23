@@ -1,0 +1,26 @@
+{
+  "name": "@kredo/demo",
+  "version": "1.0.0",
+  "private": true,
+  "sideEffects": ["*.css"],
+  "scripts": {
+    "dev": "remotion studio",
+    "build": "remotion render DemoVideo out/demo.mp4",
+    "render": "remotion render DemoVideo out/demo.mp4 --codec h264 --crf 18"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.256",
+    "@remotion/tailwind-v4": "4.0.256",
+    "lucide-react": "0.563.0",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "remotion": "4.0.256"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}

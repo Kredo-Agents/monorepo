@@ -13,6 +13,8 @@ import {
   Slack,
   Sparkles,
 } from 'lucide-react';
+import DinoGame from '@/components/DinoGame';
+import Confetti from '@/components/Confetti';
 
 type SetupStep = 1 | 2 | 3 | 4;
 
@@ -252,35 +254,50 @@ export default function SetupPage() {
 
   if (!isLoaded || (existingInstancesQuery.isLoading && !existingInstancesQuery.data)) {
     return (
-      <main className="min-h-screen bg-zinc-50/80 dark:bg-black py-10 sm:py-16">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 animate-pulse">
-          <div className="mb-8 sm:mb-10">
-            <div className="h-2.5 w-28 bg-zinc-200 dark:bg-zinc-800 rounded-full mb-3" />
-            <div className="h-10 w-72 bg-zinc-200 dark:bg-zinc-800 rounded-lg mb-3" />
-            <div className="h-5 w-56 bg-zinc-200 dark:bg-zinc-800 rounded-lg" />
+      <main className="setup-page bg-zinc-50/80 dark:bg-black flex flex-col">
+        <div className="max-w-5xl w-full mx-auto px-4 sm:px-6 flex-1 flex flex-col justify-center animate-pulse py-4 sm:py-16">
+          {/* Header skeleton */}
+          <div className="mb-4 sm:mb-10 text-center">
+            <div className="h-2.5 w-20 sm:w-28 bg-zinc-200 dark:bg-zinc-800 rounded-full mb-2 sm:mb-3 mx-auto" />
+            <div className="h-7 sm:h-10 w-52 sm:w-72 bg-zinc-200 dark:bg-zinc-800 rounded-lg mb-1.5 sm:mb-3 mx-auto" />
+            <div className="h-4 w-44 sm:w-56 bg-zinc-200 dark:bg-zinc-800 rounded-lg mx-auto" />
           </div>
-          <div className="mb-6 sm:mb-8 flex items-center justify-center gap-4 sm:gap-5">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="flex items-center gap-3">
-                <div className="h-7 w-7 rounded-full bg-zinc-200 dark:bg-zinc-800" />
-                <div className="h-4 w-14 bg-zinc-200 dark:bg-zinc-800 rounded" />
-                {i < 3 && <div className="hidden sm:block h-px w-8 bg-zinc-200 dark:bg-zinc-800" />}
-              </div>
-            ))}
+
+          {/* Progress skeleton — dots on mobile, labeled steps on desktop */}
+          <div className="mb-4 sm:mb-8 flex items-center justify-center">
+            {/* Mobile dots */}
+            <div className="flex sm:hidden items-center gap-2">
+              <div className="h-2 w-6 bg-zinc-300 dark:bg-zinc-700 rounded-full" />
+              <div className="h-2 w-2 bg-zinc-200 dark:bg-zinc-800 rounded-full" />
+              <div className="h-2 w-2 bg-zinc-200 dark:bg-zinc-800 rounded-full" />
+              <div className="ml-2 h-3 w-6 bg-zinc-200 dark:bg-zinc-800 rounded" />
+            </div>
+            {/* Desktop steps */}
+            <div className="hidden sm:flex items-center gap-5">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <div className="h-7 w-7 rounded-full bg-zinc-200 dark:bg-zinc-800" />
+                  <div className="h-4 w-14 bg-zinc-200 dark:bg-zinc-800 rounded" />
+                  {i < 3 && <div className="h-px w-8 bg-zinc-200 dark:bg-zinc-800" />}
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="rounded-3xl border border-zinc-200/80 dark:border-zinc-800/80 bg-white/80 dark:bg-zinc-900/70 overflow-hidden">
-            <div className="px-6 sm:px-10 py-5 border-b border-zinc-200/70 dark:border-zinc-800/70 bg-zinc-50/70 dark:bg-zinc-900/50">
-              <div className="h-2.5 w-16 bg-zinc-200 dark:bg-zinc-800 rounded mb-2.5" />
-              <div className="h-5 w-20 bg-zinc-200 dark:bg-zinc-800 rounded" />
+
+          {/* Card skeleton — edge-to-edge on mobile */}
+          <div className="-mx-4 sm:mx-0 rounded-none sm:rounded-3xl border-y sm:border border-zinc-200/80 dark:border-zinc-800/80 bg-white/80 dark:bg-zinc-900/70 overflow-hidden">
+            <div className="px-5 sm:px-10 py-3.5 sm:py-5 border-b border-zinc-200/70 dark:border-zinc-800/70 bg-zinc-50/70 dark:bg-zinc-900/50">
+              <div className="h-2.5 w-14 sm:w-16 bg-zinc-200 dark:bg-zinc-800 rounded mb-2" />
+              <div className="h-5 w-16 sm:w-20 bg-zinc-200 dark:bg-zinc-800 rounded" />
             </div>
-            <div className="p-6 sm:p-10 min-h-[380px] space-y-4">
-              <div className="h-8 w-52 bg-zinc-200 dark:bg-zinc-800 rounded" />
-              <div className="h-4 w-full max-w-sm bg-zinc-200 dark:bg-zinc-800 rounded" />
-              <div className="h-4 w-2/3 max-w-xs bg-zinc-200 dark:bg-zinc-800 rounded" />
+            <div className="p-5 sm:p-10 min-h-[220px] sm:min-h-[380px] flex flex-col items-center justify-center space-y-3">
+              <div className="h-6 sm:h-8 w-40 sm:w-52 bg-zinc-200 dark:bg-zinc-800 rounded mx-auto" />
+              <div className="h-4 w-56 sm:w-72 bg-zinc-200 dark:bg-zinc-800 rounded mx-auto" />
+              <div className="h-4 w-48 sm:w-64 bg-zinc-200 dark:bg-zinc-800 rounded mx-auto" />
             </div>
-            <div className="px-6 sm:px-10 pb-6 sm:pb-10 flex justify-between">
-              <div className="h-12 w-24 bg-zinc-200 dark:bg-zinc-800 rounded-xl" />
-              <div className="h-12 w-36 bg-zinc-200 dark:bg-zinc-800 rounded-xl" />
+            <div className="px-5 sm:px-10 pb-5 sm:pb-10 flex gap-3 sm:justify-between">
+              <div className="flex-1 sm:flex-none h-12 sm:w-24 bg-zinc-200 dark:bg-zinc-800 rounded-xl" />
+              <div className="flex-[2] sm:flex-none h-12 sm:w-36 bg-zinc-200 dark:bg-zinc-800 rounded-xl" />
             </div>
           </div>
         </div>
@@ -369,25 +386,49 @@ export default function SetupPage() {
   };
 
   return (
-    <main className="min-h-screen bg-zinc-50/80 dark:bg-black py-10 sm:py-16">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6">
-        {/* Header */}
-        <div className="mb-8 sm:mb-10 text-left sm:text-center">
-          <div className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400 mb-3">
+    <main className="setup-page bg-zinc-50/80 dark:bg-black flex flex-col">
+      <div className="max-w-5xl w-full mx-auto px-4 sm:px-6 flex-1 flex flex-col justify-center py-4 sm:py-16">
+        {/* Header — compact on mobile */}
+        <div className="mb-4 sm:mb-10 text-center">
+          <div className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400 mb-1.5 sm:mb-3">
             <span className="h-1.5 w-1.5 rounded-full bg-zinc-400 dark:bg-zinc-600" />
-            OpenClaw Setup
+            Kredo Setup
           </div>
-          <h1 className="text-3xl sm:text-4xl md:text-[44px] leading-tight font-semibold text-zinc-900 dark:text-zinc-50 mb-3 tracking-tight">
+          <h1 className="text-2xl sm:text-4xl md:text-[44px] leading-tight font-semibold text-zinc-900 dark:text-zinc-50 mb-1.5 sm:mb-3 tracking-tight">
             Set up your assistant
           </h1>
-          <p className="text-base sm:text-lg text-zinc-600 dark:text-zinc-400 max-w-2xl sm:mx-auto">
-            A calm, two‑minute setup. You can change everything later.
+          <p className="text-sm sm:text-lg text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto">
+            A two‑minute setup. You can change everything later.
           </p>
         </div>
 
-        {/* Progress Indicator */}
-        <div className="mb-6 sm:mb-8 animate-in fade-in slide-in-from-top-3 duration-500">
-          <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-5">
+        {/* Progress Indicator — horizontal dots on mobile, labels on desktop */}
+        <div className="mb-4 sm:mb-8 animate-in fade-in slide-in-from-top-3 duration-500">
+          {/* Mobile: compact dot progress */}
+          <div className="flex sm:hidden items-center justify-center gap-2">
+            {steps.map((step) => {
+              const isActive = currentStep === step.id;
+              const isComplete = currentStep > step.id;
+              return (
+                <div key={step.id} className="flex items-center gap-2">
+                  <div
+                    className={`h-2 rounded-full transition-all duration-300 ${
+                      isActive
+                        ? 'w-6 bg-zinc-900 dark:bg-zinc-100'
+                        : isComplete
+                        ? 'w-2 bg-zinc-900 dark:bg-zinc-100'
+                        : 'w-2 bg-zinc-300 dark:bg-zinc-700'
+                    }`}
+                  />
+                </div>
+              );
+            })}
+            <span className="ml-2 text-xs text-zinc-500 dark:text-zinc-400">
+              {currentStep}/{steps.length}
+            </span>
+          </div>
+          {/* Desktop: full labels */}
+          <div className="hidden sm:flex flex-wrap items-center justify-center gap-5">
             {steps.map((step, index) => {
               const isActive = currentStep === step.id;
               const isComplete = currentStep > step.id;
@@ -406,9 +447,7 @@ export default function SetupPage() {
                   </div>
                   <div
                     className={`text-sm font-semibold transition-colors ${
-                      isActive
-                        ? 'text-zinc-900 dark:text-zinc-50'
-                        : isComplete
+                      isActive || isComplete
                         ? 'text-zinc-900 dark:text-zinc-50'
                         : 'text-zinc-500 dark:text-zinc-400'
                     }`}
@@ -416,7 +455,7 @@ export default function SetupPage() {
                     {step.title}
                   </div>
                   {index < steps.length - 1 && (
-                    <div className="hidden sm:block h-px w-8 bg-zinc-200 dark:bg-zinc-800" />
+                    <div className="h-px w-8 bg-zinc-200 dark:bg-zinc-800" />
                   )}
                 </div>
               );
@@ -424,14 +463,14 @@ export default function SetupPage() {
           </div>
         </div>
 
-        {/* Step Content */}
-        <div className="rounded-3xl border border-zinc-200/80 dark:border-zinc-800/80 bg-white/80 dark:bg-zinc-900/70 backdrop-blur overflow-hidden">
-          <div className="px-6 sm:px-10 py-5 border-b border-zinc-200/70 dark:border-zinc-800/70 bg-zinc-50/70 dark:bg-zinc-900/50 flex items-center justify-between">
+        {/* Step Content Card — edge-to-edge on mobile, rounded on desktop */}
+        <div className="flex-1 flex flex-col -mx-4 sm:mx-0 rounded-none sm:rounded-3xl border-y sm:border border-zinc-200/80 dark:border-zinc-800/80 bg-white/80 dark:bg-zinc-900/70 backdrop-blur overflow-hidden">
+          <div className="px-5 sm:px-10 py-3.5 sm:py-5 border-b border-zinc-200/70 dark:border-zinc-800/70 bg-zinc-50/70 dark:bg-zinc-900/50 flex items-center justify-between">
             <div>
-              <p className="text-xs uppercase tracking-widest text-zinc-500 dark:text-zinc-400">
+              <p className="text-[10px] sm:text-xs uppercase tracking-widest text-zinc-500 dark:text-zinc-400">
                 Step {currentStep} of {steps.length}
               </p>
-              <h2 className="text-lg sm:text-xl font-semibold text-zinc-900 dark:text-zinc-50">
+              <h2 className="text-base sm:text-xl font-semibold text-zinc-900 dark:text-zinc-50">
                 {steps[currentStep - 1]?.title}
               </h2>
             </div>
@@ -443,7 +482,7 @@ export default function SetupPage() {
 
           <div
             key={currentStep}
-            className="p-6 sm:p-10 min-h-[380px] animate-in fade-in slide-in-from-bottom-6 duration-500"
+            className="flex-1 p-5 sm:p-10 min-h-[220px] sm:min-h-[380px] animate-step-enter"
           >
             {currentStep === 1 && <Step1Welcome />}
             {currentStep === 2 && (
@@ -480,8 +519,8 @@ export default function SetupPage() {
             )}
           </div>
 
-          <div className="px-6 sm:px-10 pb-6 sm:pb-10">
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:justify-between">
+          <div className="px-5 sm:px-10 pb-5 sm:pb-10 pt-2">
+            <div className="flex gap-3 sm:justify-between">
               <button
                 onClick={() => {
                   if (currentStep > 1) {
@@ -490,8 +529,8 @@ export default function SetupPage() {
                     router.push('/');
                   }
                 }}
-                disabled={isDeploying}
-                className="w-full sm:w-auto px-6 py-3.5 text-sm sm:text-base font-semibold text-zinc-900 dark:text-zinc-50 border border-zinc-300/80 dark:border-zinc-700/80 rounded-xl hover:border-zinc-900 dark:hover:border-zinc-200 hover:bg-white dark:hover:bg-zinc-900 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isDeploying || (currentStep === 3 && isReady)}
+                className="touch-btn flex-1 sm:flex-none sm:w-auto px-5 sm:px-6 py-3.5 text-sm font-semibold text-zinc-900 dark:text-zinc-50 border border-zinc-300/80 dark:border-zinc-700/80 rounded-xl hover:border-zinc-900 dark:hover:border-zinc-200 hover:bg-white dark:hover:bg-zinc-900 transition-all disabled:opacity-50 disabled:cursor-not-allowed select-none"
               >
                 {currentStep === 1 ? 'Cancel' : 'Back'}
               </button>
@@ -514,22 +553,22 @@ export default function SetupPage() {
                     setCurrentStep((currentStep + 1) as SetupStep);
                   }}
                   disabled={currentStep === 1 && !canProceedToStep2}
-                  className="w-full sm:w-auto px-6 py-3.5 text-sm sm:text-base font-semibold text-white bg-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 rounded-xl hover:bg-zinc-800 dark:hover:bg-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="touch-btn flex-[2] sm:flex-none sm:w-auto px-5 sm:px-6 py-3.5 text-sm font-semibold text-white bg-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 rounded-xl hover:bg-zinc-800 dark:hover:bg-white transition-all disabled:opacity-50 disabled:cursor-not-allowed select-none"
                 >
-                  {currentStep === 1 ? 'Get started →' : 'Continue →'}
+                  {currentStep === 1 ? 'Get started' : 'Continue'}
                 </button>
               ) : isReady ? (
                 <button
                   onClick={() => router.push('/dashboard')}
-                  className="w-full sm:w-auto px-6 py-3.5 text-sm sm:text-base font-semibold text-white bg-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 rounded-xl hover:bg-zinc-800 dark:hover:bg-white transition-all"
+                  className="touch-btn flex-[2] sm:flex-none sm:w-auto px-5 sm:px-6 py-3.5 text-sm font-semibold text-white bg-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 rounded-xl hover:bg-zinc-800 dark:hover:bg-white transition-all select-none"
                 >
-                  Go to dashboard →
+                  Go to dashboard
                 </button>
               ) : (
                 <button
                   onClick={handleDeploy}
                   disabled={!canDeploy || isDeploying}
-                  className="w-full sm:w-auto px-6 py-3.5 text-sm sm:text-base font-semibold text-white bg-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 rounded-xl hover:bg-zinc-800 dark:hover:bg-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="touch-btn flex-[2] sm:flex-none sm:w-auto px-5 sm:px-6 py-3.5 text-sm font-semibold text-white bg-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 rounded-xl hover:bg-zinc-800 dark:hover:bg-white transition-all disabled:opacity-50 disabled:cursor-not-allowed select-none"
                 >
                   {isDeploying ? 'Deploying…' : 'Deploy Instance'}
                 </button>
@@ -595,16 +634,16 @@ function Step3Platforms({
   ] as const;
 
   return (
-    <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-500">
-      <div>
-        <h2 className="text-2xl sm:text-3xl font-semibold text-zinc-900 dark:text-zinc-50 mb-2">
+    <div className="space-y-5 sm:space-y-8 animate-in fade-in duration-500">
+      <div className="text-center">
+        <h2 className="text-xl sm:text-3xl font-semibold text-zinc-900 dark:text-zinc-50 mb-1.5 sm:mb-2">
           Connect an app
         </h2>
-        <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400">
-          Pick one connected app to start. We will show the exact steps and token inputs below.
+        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1.5 sm:mt-2">
+          Your agent will reach you there
         </p>
-        <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 mt-2">
-          Your agent will reach you there, you will also be able to talk to it directly in the app.
+        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1.5 sm:mt-2">
+          You can also talk to it directly in the app.
         </p>
       </div>
 
@@ -617,7 +656,7 @@ function Step3Platforms({
                 key={platform.id}
                 type="button"
                 onClick={() => selectPlatform(platform.id, !isSelected)}
-                className={`rounded-2xl border p-4 sm:p-5 text-left transition-all ${
+                className={`touch-btn rounded-xl sm:rounded-2xl border p-4 sm:p-5 text-left transition-all select-none ${
                   isSelected
                     ? 'border-blue-600 bg-blue-50/70 dark:bg-blue-950/30'
                     : 'border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 hover:border-zinc-300 dark:hover:border-zinc-700'
@@ -631,16 +670,16 @@ function Step3Platforms({
                       aria-hidden="true"
                     />
                     <div>
-                      <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
+                      <h3 className="text-sm sm:text-base font-semibold text-zinc-900 dark:text-zinc-50">
                         {platform.name}
                       </h3>
-                      <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400">
+                      <p className="text-xs text-zinc-600 dark:text-zinc-400">
                         {platform.description}
                       </p>
                     </div>
                   </div>
                   <span
-                    className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
+                    className={`text-xs font-semibold px-2.5 py-1 rounded-full shrink-0 ${
                       isSelected
                         ? 'bg-blue-600 text-white'
                         : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300'
@@ -656,9 +695,12 @@ function Step3Platforms({
       )}
 
       {selectedPlatform && !showDetails ? (
-        <div className="rounded-2xl border border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 p-6 text-center space-y-2">
-          <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400">
-            Great, press Continue to view the setup steps for{' '}
+        <div className="rounded-xl sm:rounded-2xl border border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 p-5 sm:p-6 text-center space-y-2">
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            Great !
+          </p>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            Press Continue to view the setup steps for{' '}
             <span className="font-semibold text-zinc-900 dark:text-zinc-100">
               {platforms.find((platform) => platform.id === selectedPlatform)?.name}
             </span>
@@ -667,13 +709,13 @@ function Step3Platforms({
           <button
             type="button"
             onClick={() => selectPlatform(selectedPlatform, false)}
-            className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 transition-colors"
+            className="text-xs text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 transition-colors"
           >
             Choose a different connected app
           </button>
         </div>
       ) : selectedPlatform ? (
-        <div className="rounded-2xl border border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 p-5 sm:p-6 space-y-4">
+        <div className="rounded-xl sm:rounded-2xl border border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 p-4 sm:p-6 space-y-4">
           {selectedPlatform === 'matrix' && (
             <>
               <div className="flex items-center gap-3">
@@ -696,14 +738,14 @@ function Step3Platforms({
                   value={config.matrixHomeserver}
                   onChange={(e) => updateConfig({ matrixHomeserver: e.target.value })}
                   placeholder="https://matrix.org"
-                  className="w-full px-4 py-3 text-sm sm:text-base rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all placeholder:text-zinc-400"
+                  className="w-full px-3.5 py-2.5 sm:px-4 sm:py-3 text-sm rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all placeholder:text-zinc-400"
                 />
                 <input
                   type="password"
                   value={config.matrixAccessToken}
                   onChange={(e) => updateConfig({ matrixAccessToken: e.target.value })}
                   placeholder="Matrix access token"
-                  className="w-full px-4 py-3 text-sm sm:text-base rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all placeholder:text-zinc-400"
+                  className="w-full px-3.5 py-2.5 sm:px-4 sm:py-3 text-sm rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all placeholder:text-zinc-400"
                 />
               </div>
             </>
@@ -731,21 +773,21 @@ function Step3Platforms({
                   value={config.discordToken}
                   onChange={(e) => updateConfig({ discordToken: e.target.value })}
                   placeholder="Discord bot token"
-                  className="w-full px-4 py-3 text-sm sm:text-base rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all placeholder:text-zinc-400"
+                  className="w-full px-3.5 py-2.5 sm:px-4 sm:py-3 text-sm rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all placeholder:text-zinc-400"
                 />
                 <input
                   type="text"
                   value={config.discordGuildId}
                   onChange={(e) => updateConfig({ discordGuildId: e.target.value })}
                   placeholder="Guild ID (optional)"
-                  className="w-full px-4 py-3 text-sm sm:text-base rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all placeholder:text-zinc-400"
+                  className="w-full px-3.5 py-2.5 sm:px-4 sm:py-3 text-sm rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all placeholder:text-zinc-400"
                 />
                 <input
                   type="text"
                   value={config.discordChannelId}
                   onChange={(e) => updateConfig({ discordChannelId: e.target.value })}
                   placeholder="Channel IDs (comma-separated, optional)"
-                  className="w-full px-4 py-3 text-sm sm:text-base rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all placeholder:text-zinc-400"
+                  className="w-full px-3.5 py-2.5 sm:px-4 sm:py-3 text-sm rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all placeholder:text-zinc-400"
                 />
               </div>
             </>
@@ -773,14 +815,14 @@ function Step3Platforms({
                   value={config.slackBotToken}
                   onChange={(e) => updateConfig({ slackBotToken: e.target.value })}
                   placeholder="Slack bot token"
-                  className="w-full px-4 py-3 text-sm sm:text-base rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all placeholder:text-zinc-400"
+                  className="w-full px-3.5 py-2.5 sm:px-4 sm:py-3 text-sm rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all placeholder:text-zinc-400"
                 />
                 <input
                   type="password"
                   value={config.slackAppToken}
                   onChange={(e) => updateConfig({ slackAppToken: e.target.value })}
                   placeholder="Slack app token (xapp-...)"
-                  className="w-full px-4 py-3 text-sm sm:text-base rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all placeholder:text-zinc-400"
+                  className="w-full px-3.5 py-2.5 sm:px-4 sm:py-3 text-sm rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all placeholder:text-zinc-400"
                 />
               </div>
             </>
@@ -800,22 +842,14 @@ function Step3Platforms({
               <div className="text-sm text-zinc-600 dark:text-zinc-400 space-y-1">
                 <p>1) Message @BotFather and create a new bot.</p>
                 <p>2) Copy the bot token.</p>
-                <p>3) Optional: restrict access to chat IDs.</p>
               </div>
               <div className="space-y-3">
                 <input
                   type="password"
                   value={config.telegramBotToken}
                   onChange={(e) => updateConfig({ telegramBotToken: e.target.value })}
-                  placeholder="Telegram bot token"
-                  className="w-full px-4 py-3 text-sm sm:text-base rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all placeholder:text-zinc-400"
-                />
-                <input
-                  type="text"
-                  value={config.telegramChatId}
-                  onChange={(e) => updateConfig({ telegramChatId: e.target.value })}
-                  placeholder="Allowed chat IDs (comma-separated, optional)"
-                  className="w-full px-4 py-3 text-sm sm:text-base rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all placeholder:text-zinc-400"
+                  placeholder="Paste your Telegram bot token"
+                  className="w-full px-3.5 py-2.5 sm:px-4 sm:py-3 text-sm rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all placeholder:text-zinc-400"
                 />
               </div>
             </>
@@ -835,7 +869,6 @@ function Step3Platforms({
               <div className="text-sm text-zinc-600 dark:text-zinc-400 space-y-1">
                 <p>1) Create a Meta app and add WhatsApp to it.</p>
                 <p>2) Copy the Phone Number ID and access token.</p>
-                <p>3) Optional: set a verify token and webhook URL.</p>
               </div>
               <div className="space-y-3">
                 <input
@@ -843,37 +876,35 @@ function Step3Platforms({
                   value={config.whatsappPhoneNumberId}
                   onChange={(e) => updateConfig({ whatsappPhoneNumberId: e.target.value })}
                   placeholder="Phone Number ID"
-                  className="w-full px-4 py-3 text-sm sm:text-base rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all placeholder:text-zinc-400"
+                  className="w-full px-3.5 py-2.5 sm:px-4 sm:py-3 text-sm rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all placeholder:text-zinc-400"
                 />
                 <input
                   type="password"
                   value={config.whatsappAccessToken}
                   onChange={(e) => updateConfig({ whatsappAccessToken: e.target.value })}
                   placeholder="Access token"
-                  className="w-full px-4 py-3 text-sm sm:text-base rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all placeholder:text-zinc-400"
+                  className="w-full px-3.5 py-2.5 sm:px-4 sm:py-3 text-sm rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all placeholder:text-zinc-400"
                 />
                 <input
                   type="text"
                   value={config.whatsappVerifyToken}
                   onChange={(e) => updateConfig({ whatsappVerifyToken: e.target.value })}
                   placeholder="Verify token (optional)"
-                  className="w-full px-4 py-3 text-sm sm:text-base rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all placeholder:text-zinc-400"
+                  className="w-full px-3.5 py-2.5 sm:px-4 sm:py-3 text-sm rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all placeholder:text-zinc-400"
                 />
                 <input
                   type="text"
                   value={config.whatsappWebhookUrl}
                   onChange={(e) => updateConfig({ whatsappWebhookUrl: e.target.value })}
                   placeholder="Webhook URL (optional)"
-                  className="w-full px-4 py-3 text-sm sm:text-base rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all placeholder:text-zinc-400"
+                  className="w-full px-3.5 py-2.5 sm:px-4 sm:py-3 text-sm rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all placeholder:text-zinc-400"
                 />
               </div>
             </>
           )}
         </div>
       ) : (
-        <div className="rounded-2xl border border-dashed border-zinc-200 dark:border-zinc-800 p-6 text-center text-sm text-zinc-600 dark:text-zinc-400">
-          Select a connected app to see setup steps and token inputs.
-        </div>
+        <></>
       )}
     </div>
   );
@@ -881,13 +912,13 @@ function Step3Platforms({
 
 function Step1Welcome() {
   return (
-    <div className="space-y-6 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="text-center max-w-2xl mx-auto space-y-2">
-        <h2 className="text-2xl sm:text-3xl font-semibold text-zinc-900 dark:text-zinc-50">
+    <div className="flex flex-col items-center justify-center h-full animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="text-center max-w-2xl mx-auto space-y-3">
+        <h2 className="text-xl sm:text-3xl font-semibold text-zinc-900 dark:text-zinc-50">
           Welcome to Kredo
         </h2>
         <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400">
-          You’re a minute away from getting your very own AI assistant.
+          You're a minute away from getting your very own AI assistant.
         </p>
         <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400">
           This setup wizard will guide you through the process.
@@ -923,48 +954,72 @@ function Step4Review({
   if (config.telegramEnabled) enabledPlatforms.push({ name: 'Telegram', Icon: Send });
   if (config.whatsappEnabled) enabledPlatforms.push({ name: 'WhatsApp', Icon: MessageCircle });
 
-  return (
-    <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-500">
-      {!isDeploying && (
-      <div className="text-center max-w-2xl mx-auto space-y-2">
-        <h2 className="text-2xl sm:text-3xl font-semibold text-zinc-900 dark:text-zinc-50">
-          Review and deploy
-        </h2>
-        <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400">
-          One last look. Then we’ll quietly launch your assistant.
-        </p>
+  if (isReady) {
+    return (
+      <div className="relative animate-in fade-in duration-500">
+        <Confetti className="absolute inset-0 z-10" />
+        <div className="text-center py-8 sm:py-16 space-y-4">
+          <div className="flex justify-center mb-2">
+            <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-emerald-100 dark:bg-emerald-950/50 flex items-center justify-center">
+              <Sparkles className="h-7 w-7 sm:h-8 sm:w-8 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+            </div>
+          </div>
+          <h2 className="text-2xl sm:text-4xl font-semibold text-zinc-900 dark:text-zinc-50">
+            You&apos;re all set!
+          </h2>
+          <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400 max-w-md mx-auto">
+            Your assistant is live and ready to go.
+            {showPairingStep
+              ? ' Continue to pair your Telegram account.'
+              : ' Head to your dashboard to start chatting.'}
+          </p>
+          {enabledPlatforms.length > 0 && (
+            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 dark:border-emerald-800/60 bg-emerald-50/80 dark:bg-emerald-950/30 px-4 py-2 text-sm text-emerald-700 dark:text-emerald-300">
+              {(() => {
+                const Icon = enabledPlatforms[0].Icon;
+                return <Icon className="h-4 w-4" aria-hidden="true" />;
+              })()}
+              <span className="font-medium">{enabledPlatforms[0].name}</span>
+              <span className="text-emerald-500 dark:text-emerald-400">connected</span>
+            </div>
+          )}
+        </div>
       </div>
-      )
-      }
+    );
+  }
+
+  return (
+    <div className="space-y-5 sm:space-y-8 animate-in fade-in duration-500">
+      {!isDeploying && (
+        <div className="text-center max-w-2xl mx-auto space-y-2">
+          <h2 className="text-xl sm:text-3xl font-semibold text-zinc-900 dark:text-zinc-50">
+            Review and deploy
+          </h2>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            One last look. Then we&apos;ll quietly launch your assistant.
+          </p>
+        </div>
+      )}
 
       {error && (
-        <div className="p-5 rounded-2xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/60">
+        <div className="p-4 sm:p-5 rounded-xl sm:rounded-2xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/60">
           <div className="flex items-start gap-3">
-            <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-300" aria-hidden="true" />
+            <AlertTriangle className="h-5 w-5 sm:h-6 sm:w-6 text-red-600 dark:text-red-300 shrink-0" aria-hidden="true" />
             <div>
-              <h4 className="font-semibold text-red-900 dark:text-red-200 mb-1">Deployment Error</h4>
-              <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
+              <h4 className="font-semibold text-red-900 dark:text-red-200 mb-1 text-sm sm:text-base">Deployment Error</h4>
+              <p className="text-xs sm:text-sm text-red-800 dark:text-red-300">{error}</p>
             </div>
           </div>
         </div>
       )}
 
-      {isDeploying && !isReady ? (
-        <div className="text-center py-10 sm:py-16">
-          <div className="flex items-center justify-center gap-1.5 mb-6">
-            <span className="h-2 w-2 rounded-full bg-zinc-400 dark:bg-zinc-500 animate-bounce [animation-delay:-0.3s]" />
-            <span className="h-2 w-2 rounded-full bg-zinc-400 dark:bg-zinc-500 animate-bounce [animation-delay:-0.15s]" />
-            <span className="h-2 w-2 rounded-full bg-zinc-400 dark:bg-zinc-500 animate-bounce" />
-          </div>
-          <h3 className="text-xl sm:text-2xl font-semibold text-zinc-900 dark:text-zinc-50 mb-2">Starting your OpenClaw instance…</h3>
-          <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400">
-            This takes a minute. Pairing appears as soon as we’re ready.
+      {isDeploying ? (
+        <div className="text-center py-4 sm:py-8">
+          <h3 className="text-lg sm:text-2xl font-semibold text-zinc-900 dark:text-zinc-50 mb-1">Starting your instance…</h3>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
+            This takes a minute. Play while you wait!
           </p>
-          {showDeployHoldNotice && (
-            <p className="mt-3 text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
-              We will unlock Continue as soon as deployment finishes.
-            </p>
-          )}
+          <DinoGame className="w-full cursor-pointer select-none" />
           {(bootStatus || gatewayStatus) && (
             <p className="mt-3 text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
               Status: {bootStatus || gatewayStatus}
@@ -972,9 +1027,9 @@ function Step4Review({
           )}
         </div>
       ) : (
-        <div className="space-y-4 max-w-2xl mx-auto">
-          <div className="bg-white dark:bg-zinc-900 rounded-2xl p-5 sm:p-6 border border-zinc-200/80 dark:border-zinc-800/80">
-            <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 uppercase tracking-widest">
+        <div className="space-y-3 sm:space-y-4 max-w-2xl mx-auto">
+          <div className="bg-white dark:bg-zinc-900 rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-zinc-200/80 dark:border-zinc-800/80">
+            <p className="text-[10px] sm:text-xs text-zinc-500 dark:text-zinc-400 uppercase tracking-widest">
               Connected App
             </p>
             {enabledPlatforms.length > 0 ? (
@@ -994,21 +1049,19 @@ function Step4Review({
                 </div>
               </div>
             ) : (
-            <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">No connected app selected</p>
+              <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">No connected app selected</p>
             )}
           </div>
 
-          <div className="bg-zinc-50 dark:bg-zinc-900/60 rounded-2xl p-5 sm:p-6 border border-zinc-200/80 dark:border-zinc-800/80">
+          <div className="bg-zinc-50 dark:bg-zinc-900/60 rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-zinc-200/80 dark:border-zinc-800/80">
             <div className="flex items-start gap-3">
-              <Sparkles className="h-6 w-6 text-zinc-700 dark:text-zinc-300" aria-hidden="true" />
+              <Sparkles className="h-5 w-5 sm:h-6 sm:w-6 text-zinc-700 dark:text-zinc-300 shrink-0" aria-hidden="true" />
               <div>
-                <h4 className="font-semibold text-zinc-900 dark:text-zinc-100 mb-1">
-                  {isReady ? 'Deployed' : 'Ready to deploy'}
+                <h4 className="font-semibold text-zinc-900 dark:text-zinc-100 mb-0.5 sm:mb-1 text-sm sm:text-base">
+                  Ready to deploy
                 </h4>
                 <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400">
-                  {isReady
-                    ? 'Your assistant is live. Continue when you are ready.'
-                    : 'We will launch your assistant and take you to the dashboard.'}
+                  We will launch your assistant and take you to the dashboard.
                 </p>
               </div>
             </div>
@@ -1043,12 +1096,12 @@ function Step5Pairing({
   const codeChars = normalizedCode.padEnd(8, ' ').split('');
 
   return (
-    <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-5 sm:space-y-8 animate-in fade-in duration-500">
       <div className="text-center max-w-2xl mx-auto space-y-2">
-        <h2 className="text-2xl sm:text-3xl font-semibold text-zinc-900 dark:text-zinc-50">
+        <h2 className="text-xl sm:text-3xl font-semibold text-zinc-900 dark:text-zinc-50">
           Pair Telegram
         </h2>
-        <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400">
+        <p className="text-sm text-zinc-600 dark:text-zinc-400">
           <span className="block">
             1) Send <span>/start</span> to your Telegram bot.
           </span>
@@ -1059,30 +1112,30 @@ function Step5Pairing({
         </p>
       </div>
 
-      <div className="bg-white dark:bg-zinc-900 rounded-2xl p-6 sm:p-8 border border-zinc-200/80 dark:border-zinc-800/80 max-w-2xl mx-auto">
+      <div className="bg-white dark:bg-zinc-900 rounded-xl sm:rounded-2xl p-5 sm:p-8 border border-zinc-200/80 dark:border-zinc-800/80 max-w-2xl mx-auto">
         {!isReady ? (
           <div className="text-center space-y-2">
-            <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400">
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">
               Pairing becomes available as soon as deployment finishes.
             </p>
             <p className="text-xs text-zinc-500 dark:text-zinc-500">
-              We’ll bring you back here automatically.
+              We'll bring you back here automatically.
             </p>
           </div>
         ) : (
           <div className="space-y-4">
-            <label className="text-xs uppercase tracking-widest text-zinc-500 dark:text-zinc-400">
+            <label className="text-[10px] sm:text-xs uppercase tracking-widest text-zinc-500 dark:text-zinc-400">
               Pairing code
             </label>
             <div
-              className="flex flex-wrap justify-center items-center gap-2 sm:gap-3"
+              className="flex justify-center items-center gap-1.5 sm:gap-3"
               onClick={() => inputRef.current?.focus()}
               role="presentation"
             >
               {codeChars.map((char, index) => (
                 <div
                   key={`pair-${index}`}
-                  className="h-12 w-10 sm:h-14 sm:w-12 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 text-lg sm:text-xl font-semibold text-zinc-900 dark:text-zinc-50 flex items-center justify-center"
+                  className="h-11 w-9 sm:h-14 sm:w-12 rounded-lg sm:rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 text-base sm:text-xl font-semibold text-zinc-900 dark:text-zinc-50 flex items-center justify-center"
                 >
                   {char.trim() || '\u00A0'}
                 </div>
@@ -1099,14 +1152,14 @@ function Step5Pairing({
                 aria-label="Pairing code"
               />
             </div>
-            <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 text-center">
-              Paste your code or type it. We’ll auto-format.
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 text-center">
+              Paste your code or type it. We'll auto-format.
             </p>
             <div className="flex flex-col items-center gap-3">
               <button
                 onClick={onApprovePairing}
                 disabled={!normalizedCode.trim() || isApproving}
-                className="px-5 py-2.5 rounded-lg text-sm font-semibold text-white bg-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="touch-btn px-6 py-3.5 rounded-xl text-sm font-semibold text-white bg-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors select-none"
               >
                 {isApproving ? 'Approving...' : 'Approve pairing'}
               </button>
