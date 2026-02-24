@@ -73,6 +73,14 @@ export default function RootFooter() {
                 pump.fun
               </a>
               <a
+                href="https://x.com/trykredo"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors"
+              >
+                X (Twitter)
+              </a>
+              <a
                 href="https://t.me/trykredo"
                 target="_blank"
                 rel="noopener noreferrer"
