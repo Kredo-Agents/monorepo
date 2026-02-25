@@ -173,6 +173,14 @@ async function generateOpenClawConfig(
           ],
         },
       },
+      web: {
+        search: {
+          provider: "gemini",
+          gemini: {
+            model: "gemini-2.5-flash",
+          },
+        },
+      },
     },
 
     // Hooks config
