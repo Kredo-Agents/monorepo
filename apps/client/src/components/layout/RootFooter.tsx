@@ -65,7 +65,7 @@ export default function RootFooter() {
                 GitHub
               </a>
               <a
-                href="https://pump.fun"
+                href="https://pump.fun/coin/GqtnXK2QfXKDLqWjyphQf77ZpZxVrt19mZMQ7S9ipump"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors"
