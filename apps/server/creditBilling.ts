@@ -1,6 +1,6 @@
 import { INSTANCE_DAILY_COST, PLANS, DEFAULT_PLAN, type PlanTier } from "@shared/const";
 import * as db from "./db";
-import * as k8s from "./kubernetes";
+import * as docker from "./docker";
 
 const BILLING_INTERVAL_MS = 60 * 60 * 1000; // check every hour
 
@@ -102,7 +102,7 @@ async function runBillingCycle() {
         console.log(`[CreditBilling] User ${userId} has insufficient credits (${userCredits}). Stopping instances.`);
         for (const instance of userInstances) {
           try {
-            await k8s.stopInstance(instance.id.toString());
+            await docker.stopInstance(instance.id.toString());
             await db.updateInstance(instance.id, { status: "stopped" });
           } catch (err) {
             console.error(`[CreditBilling] Failed to stop instance ${instance.id}:`, err);

@@ -1,5 +1,5 @@
 import * as db from "./db";
-import * as k8s from "./kubernetes";
+import * as docker from "./docker";
 
 const TAG = "[GatewayBridge]";
 
@@ -13,8 +13,7 @@ type ConnectionState =
 
 interface GatewayConnection {
   instanceId: string;
-  /** Gateway address in the form "ip:port" (pod IP for K8s, or localhost:port for legacy) */
-  address: string;
+  port: number;
   gatewayToken: string;
   ws: WebSocket | null;
   state: ConnectionState;
@@ -42,7 +41,7 @@ const connections = new Map<string, GatewayConnection>();
  */
 export function connectToGateway(
   instanceId: string,
-  address: string,
+  port: number,
   gatewayToken: string,
 ): void {
   // Tear down any existing connection for this instance first
@@ -52,7 +51,7 @@ export function connectToGateway(
 
   const conn: GatewayConnection = {
     instanceId,
-    address,
+    port,
     gatewayToken,
     ws: null,
     state: "connecting",
@@ -74,19 +73,19 @@ export function connectToGateway(
  */
 export function scheduleConnect(
   instanceId: string,
-  address: string,
+  port: number,
   gatewayToken: string,
   delayMs = 10_000,
 ): void {
   const timer = setTimeout(() => {
-    connectToGateway(instanceId, address, gatewayToken);
+    connectToGateway(instanceId, port, gatewayToken);
   }, delayMs);
 
   // Store a placeholder so we can cancel the scheduled connect on stop/delete
   if (!connections.has(instanceId)) {
     connections.set(instanceId, {
       instanceId,
-      address,
+      port,
       gatewayToken,
       ws: null,
       state: "connecting",
@@ -149,7 +148,9 @@ export async function initGatewayBridge(): Promise<void> {
   console.log(`${TAG} Initializing — reconnecting to running instances`);
   try {
     const allInstances = await db.getAllInstances();
-    const running = allInstances.filter((i) => i.status === "running");
+    const running = allInstances.filter(
+      (i) => i.status === "running" && i.port,
+    );
 
     if (running.length === 0) {
       console.log(`${TAG} No running instances to reconnect`);
@@ -157,25 +158,15 @@ export async function initGatewayBridge(): Promise<void> {
     }
 
     for (const instance of running) {
-      const token = await k8s.readGatewayToken(instance.id.toString());
+      const token = await docker.readGatewayToken(instance.id.toString());
       if (!token) {
         console.warn(
           `${TAG} No gateway token found for instance ${instance.id}, skipping`,
         );
         continue;
       }
-
-      // Resolve pod IP for K8s-based instances
-      const address = await k8s.getGatewayAddress(instance.id.toString());
-      if (!address) {
-        console.warn(
-          `${TAG} No pod IP found for instance ${instance.id}, skipping`,
-        );
-        continue;
-      }
-
       // Stagger connections slightly to avoid a thundering-herd on restart
-      scheduleConnect(instance.id.toString(), address, token, 5_000);
+      scheduleConnect(instance.id.toString(), instance.port!, token, 5_000);
     }
 
     console.log(
@@ -190,7 +181,7 @@ export async function initGatewayBridge(): Promise<void> {
 
 function openWebSocket(conn: GatewayConnection): void {
   try {
-    const url = `ws://${conn.address}`;
+    const url = `ws://127.0.0.1:${conn.port}`;
     const ws = new WebSocket(url);
     conn.ws = ws;
     conn.state = "connecting";
@@ -345,12 +336,7 @@ function scheduleReconnect(conn: GatewayConnection): void {
   );
 
   conn.reconnectAttempts += 1;
-  conn.reconnectTimer = setTimeout(async () => {
-    // Re-resolve pod IP on reconnect — it may have changed after pod restart
-    const newAddress = await k8s.getGatewayAddress(conn.instanceId);
-    if (newAddress) {
-      conn.address = newAddress;
-    }
+  conn.reconnectTimer = setTimeout(() => {
     openWebSocket(conn);
   }, delay);
 }
@@ -359,7 +345,7 @@ async function checkAndApprovePendingNodes(
   conn: GatewayConnection,
 ): Promise<void> {
   try {
-    const result = await k8s.execInContainer(conn.instanceId, [
+    const result = await docker.execInContainer(conn.instanceId, [
       "node",
       "dist/index.js",
       "nodes",
@@ -391,7 +377,7 @@ async function checkAndApprovePendingNodes(
       )
         continue;
 
-      const approveResult = await k8s.execInContainer(conn.instanceId, [
+      const approveResult = await docker.execInContainer(conn.instanceId, [
         "node",
         "dist/index.js",
         "nodes",

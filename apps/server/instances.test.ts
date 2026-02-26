@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
 import * as db from "./db";
-import * as k8s from "./kubernetes";
+import * as docker from "./docker";
 
 type AuthenticatedUser = NonNullable<TrpcContext["user"]>;
 
@@ -36,27 +36,24 @@ function createAuthContext(): { ctx: TrpcContext } {
 vi.mock("./db", () => ({
   getInstancesByUserId: vi.fn(),
   getInstanceByIdForUser: vi.fn(),
+  getUsedInstancePorts: vi.fn(),
   createInstance: vi.fn(),
   updateInstance: vi.fn(),
   deleteInstance: vi.fn(),
 }));
 
-vi.mock("./kubernetes", () => ({
+vi.mock("./docker", () => ({
   createInstance: vi.fn(),
   deleteInstance: vi.fn(),
   stopInstance: vi.fn(),
   startInstance: vi.fn(),
-  restartInstance: vi.fn(),
   getInstanceStatus: vi.fn(),
   getInstanceLogs: vi.fn(),
   getInstanceStats: vi.fn(),
-  getGatewayAddress: vi.fn(),
-  readGatewayToken: vi.fn(),
-  getPodIp: vi.fn(),
 }));
 
 const mockDb = vi.mocked(db);
-const mockK8s = vi.mocked(k8s);
+const mockDocker = vi.mocked(docker);
 
 describe("instances", () => {
   beforeEach(() => {
@@ -78,6 +75,7 @@ describe("instances", () => {
     const caller = appRouter.createCaller(ctx);
     const userId = ctx.user!.id;
 
+    mockDb.getUsedInstancePorts.mockResolvedValue([]);
     mockDb.createInstance.mockResolvedValue({
       id: 1,
       userId,
@@ -88,15 +86,15 @@ describe("instances", () => {
       llmApiKey: null,
       llmModel: null,
       config: { provider: "google", authToken: "token" },
-      port: null,
+      port: 18790,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
-    mockK8s.createInstance.mockResolvedValue({
+    mockDocker.createInstance.mockResolvedValue({
       success: true,
-      containerId: "openclaw-1",
+      containerId: "container-1",
       gatewayToken: "gateway-token-1",
-      podIp: "10.0.1.5",
+      port: 18790,
     });
     mockDb.updateInstance.mockResolvedValue();
 
@@ -112,11 +110,14 @@ describe("instances", () => {
     expect(instance.status).toBe("stopped");
   });
 
-  it("retries instance creation when K8s fails", async () => {
+  it("retries instance creation when docker fails", async () => {
     const { ctx } = createAuthContext();
     const caller = appRouter.createCaller(ctx);
     const userId = ctx.user!.id;
 
+    mockDb.getUsedInstancePorts
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([18790]);
     mockDb.createInstance
       .mockResolvedValueOnce({
         id: 1,
@@ -128,7 +129,7 @@ describe("instances", () => {
         llmApiKey: null,
         llmModel: null,
         config: { provider: "google", authToken: "token" },
-        port: null,
+        port: 18790,
         createdAt: new Date(),
         updatedAt: new Date(),
       })
@@ -142,21 +143,21 @@ describe("instances", () => {
         llmApiKey: null,
         llmModel: null,
         config: { provider: "google", authToken: "token" },
-        port: null,
+        port: 18791,
         createdAt: new Date(),
         updatedAt: new Date(),
       });
-    mockK8s.createInstance
-      .mockResolvedValueOnce({ success: false, error: "pod scheduling failed" })
+    mockDocker.createInstance
+      .mockResolvedValueOnce({ success: false, error: "port in use" })
       .mockResolvedValueOnce({
         success: true,
-        containerId: "openclaw-2",
+        containerId: "container-2",
         gatewayToken: "gateway-token-2",
-        podIp: "10.0.1.6",
+        port: 18791,
       });
     mockDb.updateInstance.mockResolvedValue();
     mockDb.deleteInstance.mockResolvedValue();
-    mockK8s.deleteInstance.mockResolvedValue({ success: true });
+    mockDocker.deleteInstance.mockResolvedValue({ success: true });
 
     const instance = await caller.instances.create({
       name: "Retry Instance",
@@ -188,7 +189,8 @@ describe("instances", () => {
       updatedAt: new Date(),
     });
     mockDb.updateInstance.mockResolvedValue();
-    mockK8s.restartInstance.mockResolvedValue({ success: true });
+    mockDocker.stopInstance.mockResolvedValue({ success: true });
+    mockDocker.startInstance.mockResolvedValue({ success: true });
 
     // Update the instance
     const result = await caller.instances.update({
@@ -219,7 +221,7 @@ describe("instances", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
     });
-    mockK8s.deleteInstance.mockResolvedValue({ success: true });
+    mockDocker.deleteInstance.mockResolvedValue({ success: true });
     mockDb.deleteInstance.mockResolvedValue();
 
     // Delete the instance
