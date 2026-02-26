@@ -25,7 +25,7 @@ export const PLANS: Record<PlanTier, PlanConfig> = {
   free: {
     name: 'free',
     displayName: 'Free',
-    dailyRefreshCredits: 0, // no daily refresh — free tier is a 7-day trial via welcome credits
+    dailyRefreshCredits: 20, // no daily refresh — free tier is a 7-day trial via welcome credits
     maxCredits: 1250,
   },
   pro: {
