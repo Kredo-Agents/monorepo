@@ -865,8 +865,8 @@ export default function Home() {
                     </div>
                     <ul className="space-y-4">
                       {[
-                        { label: "0.1 credits", desc: "per chat message sent to your agent" },
-                        { label: "5 credits", desc: "per day your agent instance is running" },
+                        { label: "0.1–0.2 credits", desc: "per chat message depending on model" },
+                        { label: "7.5 credits", desc: "per day your agent instance is running" },
                         { label: "Burn SIGIL", desc: "mint from locked KREDO or buy on DEX, then burn for credits" },
                         { label: "Pay USDC", desc: "buy credits directly via Helio on Solana. No tokens required." },
                         { label: "No lock-in", desc: "self-host for free, or top up anytime on cloud" },

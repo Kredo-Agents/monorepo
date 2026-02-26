@@ -168,7 +168,7 @@ export const appRouter = router({
         if (userCredits < INSTANCE_DAILY_COST) {
           throw new TRPCError({
             code: "FORBIDDEN",
-            message: "Insufficient credits to create an instance. Running instances cost 5 credits/day.",
+            message: "Insufficient credits to create an instance. Running instances cost 7.5 credits/day.",
           });
         }
 
@@ -331,7 +331,7 @@ export const appRouter = router({
         if (startCredits < INSTANCE_DAILY_COST) {
           throw new TRPCError({
             code: "FORBIDDEN",
-            message: "Insufficient credits to start an instance. Running instances cost 5 credits/day.",
+            message: "Insufficient credits to start an instance. Running instances cost 7.5 credits/day.",
           });
         }
 

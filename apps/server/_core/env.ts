@@ -9,6 +9,10 @@ export const ENV = {
   instancesBasePath:
     process.env.OPENCLAW_INSTANCES_PATH ??
     `${os.homedir()}/openclaw-instances`,
+  // Kubernetes / GKE configuration for OpenClaw instances
+  k8sNamespace: process.env.K8S_NAMESPACE ?? "openclaw",
+  openclawImage: process.env.OPENCLAW_IMAGE ?? "openclaw:local",
+  k8sInCluster: process.env.K8S_IN_CLUSTER === "true",
   clerkSecretKey: process.env.CLERK_SECRET_KEY ?? "",
   // OpenRouter API key for cheap/flash model (optional)
   openrouterApiKey: process.env.OPENROUTER_API_KEY ?? "",

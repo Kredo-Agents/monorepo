@@ -43,7 +43,7 @@ export default function CreditsPage() {
       <div className="mb-8">
         <h1 className="text-2xl sm:text-3xl font-bold text-zinc-900 dark:text-zinc-50">Credits</h1>
         <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-2">
-          Credits are used for chat messages (0.1 per message) and running instances (5 per day).
+          Credits are used for chat messages (0.1–0.2 per message) and running instances (7.5 per day).
         </p>
         <div className="mt-4 flex items-center gap-3 rounded-2xl border border-zinc-200/70 dark:border-zinc-800/70 bg-white dark:bg-zinc-900/40 px-5 py-4">
           <Coins className="h-8 w-8 text-amber-500" aria-hidden="true" />
