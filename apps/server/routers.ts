@@ -9,10 +9,8 @@ import { handleChatRequest } from "./chat";
 import * as cron from "./cron";
 import * as db from "./db";
 import { syncSkills } from "./skillsSync";
-import * as docker from "./docker";
+import * as k8s from "./kubernetes";
 import * as gatewayBridge from "./gatewayBridge";
-
-const BASE_INSTANCE_PORT = 18790;
 
 async function getOwnedInstanceOrThrow(instanceId: number, userId: number) {
   const instance = await db.getInstanceByIdForUser(instanceId, userId);
@@ -28,15 +26,6 @@ async function getOwnedCollectionOrThrow(collectionId: number, userId: number) {
     throw new TRPCError({ code: "NOT_FOUND", message: "Collection not found" });
   }
   return collection;
-}
-
-async function getNextAvailableInstancePort(): Promise<number> {
-  const usedPorts = new Set(await db.getUsedInstancePorts());
-  let port = BASE_INSTANCE_PORT;
-  while (usedPorts.has(port)) {
-    port += 1;
-  }
-  return port;
 }
 
 export const appRouter = router({
@@ -65,7 +54,7 @@ export const appRouter = router({
             };
           }
 
-          const runtime = await docker.getInstanceStatus(instance.id.toString());
+          const runtime = await k8s.getInstanceStatus(instance.id.toString());
           if (!runtime.success) {
             return {
               ...instance,
@@ -76,8 +65,8 @@ export const appRouter = router({
 
           let gatewayReady = false;
           let gatewayStatus: string | undefined;
-          if (instance.port && runtime.running) {
-            const gateway = await docker.getGatewayStatus(instance.port);
+          if (runtime.running) {
+            const gateway = await k8s.getGatewayStatus(instance.id.toString());
             gatewayReady = Boolean(gateway.ready);
             gatewayStatus = gateway.status;
           }
@@ -181,8 +170,6 @@ export const appRouter = router({
         };
 
         for (let attempt = 0; attempt < 3; attempt += 1) {
-          const nextPort = await getNextAvailableInstancePort();
-
           const instance = await db.createInstance({
             userId: ctx.user.id,
             name: input.name,
@@ -192,14 +179,12 @@ export const appRouter = router({
             llmModel: input.llmModel ?? undefined,
             config: resolvedConfig,
             status: "stopped",
-            port: nextPort,
           });
 
           try {
-            const dockerResult = await docker.createInstance({
+            const k8sResult = await k8s.createInstance({
               instanceId: instance.id.toString(),
               name: input.name,
-              port: nextPort,
               model: input.config.model,
               authToken: resolvedAuthToken,
               telegramToken: input.config.telegram?.botToken,
@@ -219,21 +204,22 @@ export const appRouter = router({
               whatsappWebhookUrl: input.config.whatsapp?.webhookUrl,
             });
 
-            if (!dockerResult.success) {
-              lastError = dockerResult.error || "Failed to create instance";
+            if (!k8sResult.success) {
+              lastError = k8sResult.error || "Failed to create instance";
               await db.deleteInstance(instance.id);
-              await docker.deleteInstance(instance.id.toString());
+              await k8s.deleteInstance(instance.id.toString());
               continue;
             }
 
             await db.updateInstance(instance.id, { status: "running" });
 
             // Schedule WS pairing with the gateway (non-blocking)
-            if (dockerResult.gatewayToken) {
+            if (k8sResult.gatewayToken && k8sResult.podIp) {
+              const address = `${k8sResult.podIp}:18789`;
               gatewayBridge.scheduleConnect(
                 instance.id.toString(),
-                nextPort,
-                dockerResult.gatewayToken,
+                address,
+                k8sResult.gatewayToken,
               );
             }
 
@@ -241,7 +227,7 @@ export const appRouter = router({
           } catch (error) {
             lastError = error instanceof Error ? error.message : String(error);
             await db.deleteInstance(instance.id);
-            await docker.deleteInstance(instance.id.toString());
+            await k8s.deleteInstance(instance.id.toString());
           }
         }
 
@@ -272,8 +258,7 @@ export const appRouter = router({
         
         // If instance is running, restart it to apply changes
         if (instance.status === "running") {
-          await docker.stopInstance(id.toString());
-          await docker.startInstance(id.toString());
+          await k8s.restartInstance(id.toString());
         }
         
         return { success: true };
@@ -292,7 +277,7 @@ export const appRouter = router({
             message: "Instance is not running",
           });
         }
-        const result = await docker.approveTelegramPairing(
+        const result = await k8s.approveTelegramPairing(
           instance.id.toString(),
           input.code.trim()
         );
@@ -309,9 +294,9 @@ export const appRouter = router({
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => {
         await getOwnedInstanceOrThrow(input.id, ctx.user.id);
-        // Disconnect WS bridge, then delete Docker container
+        // Disconnect WS bridge, then delete K8s deployment
         gatewayBridge.disconnectGateway(input.id.toString());
-        await docker.deleteInstance(input.id.toString());
+        await k8s.deleteInstance(input.id.toString());
         // Then delete from database
         await db.deleteInstance(input.id);
         return { success: true };
@@ -322,9 +307,6 @@ export const appRouter = router({
       .mutation(async ({ ctx, input }) => {
         // Get instance config from database
         const instance = await getOwnedInstanceOrThrow(input.id, ctx.user.id);
-        if (!instance.port) {
-          return { success: false, error: "Instance port not configured" };
-        }
 
         // Check credits before starting instance
         const startCredits = await db.getUserCredits(ctx.user.id);
@@ -335,14 +317,13 @@ export const appRouter = router({
           });
         }
 
-        // Prepare config for container recreation
+        // Prepare config for pod recreation
         const config = instance.config as any;
         const envGoogleApiKey = process.env.GOOGLE_API_KEY;
         const resolvedAuthToken = config.authToken || envGoogleApiKey;
         const instanceConfig = {
           instanceId: instance.id.toString(),
           name: instance.name,
-          port: instance.port,
           model: instance.llmModel || config.model,
           authToken: resolvedAuthToken,
           telegramToken: config.telegram?.botToken,
@@ -361,17 +342,18 @@ export const appRouter = router({
           whatsappVerifyToken: config.whatsapp?.verifyToken,
           whatsappWebhookUrl: config.whatsapp?.webhookUrl,
         };
-        
-        const result = await docker.startInstance(instance.id.toString(), instanceConfig);
+
+        const result = await k8s.startInstance(instance.id.toString(), instanceConfig);
         if (result.success) {
           await db.updateInstance(input.id, { status: "running" });
 
           // Schedule WS pairing with the gateway (non-blocking)
-          const token = await docker.readGatewayToken(instance.id.toString());
-          if (token && instance.port) {
+          const token = await k8s.readGatewayToken(instance.id.toString());
+          const address = await k8s.getGatewayAddress(instance.id.toString());
+          if (token && address) {
             gatewayBridge.scheduleConnect(
               instance.id.toString(),
-              instance.port,
+              address,
               token,
             );
           }
@@ -384,7 +366,7 @@ export const appRouter = router({
       .mutation(async ({ ctx, input }) => {
         await getOwnedInstanceOrThrow(input.id, ctx.user.id);
         gatewayBridge.disconnectGateway(input.id.toString());
-        const result = await docker.stopInstance(input.id.toString());
+        const result = await k8s.stopInstance(input.id.toString());
         if (result.success) {
           await db.updateInstance(input.id, { status: "stopped" });
         }
@@ -395,7 +377,7 @@ export const appRouter = router({
       .input(z.object({ id: z.number() }))
       .query(async ({ ctx, input }) => {
         const instance = await getOwnedInstanceOrThrow(input.id, ctx.user.id);
-        const runtime = await docker.getInstanceStatus(input.id.toString());
+        const runtime = await k8s.getInstanceStatus(input.id.toString());
         if (!runtime.success) {
           return {
             ...runtime,
@@ -405,8 +387,8 @@ export const appRouter = router({
 
         const wsStatus = gatewayBridge.getConnectionStatus(input.id.toString());
 
-        if (instance.port && runtime.running) {
-          const gateway = await docker.getGatewayStatus(instance.port);
+        if (runtime.running) {
+          const gateway = await k8s.getGatewayStatus(instance.id.toString());
           return {
             ...runtime,
             gatewayReady: gateway.ready,
@@ -431,14 +413,14 @@ export const appRouter = router({
       }))
       .query(async ({ ctx, input }) => {
         await getOwnedInstanceOrThrow(input.id, ctx.user.id);
-        return docker.getInstanceLogs(input.id.toString(), input.tail);
+        return k8s.getInstanceLogs(input.id.toString(), input.tail);
       }),
 
     stats: protectedProcedure
       .input(z.object({ id: z.number() }))
       .query(async ({ ctx, input }) => {
         await getOwnedInstanceOrThrow(input.id, ctx.user.id);
-        return docker.getInstanceStats(input.id.toString());
+        return k8s.getInstanceStats(input.id.toString());
       }),
   }),
 
@@ -546,7 +528,7 @@ export const appRouter = router({
           // Get skill content from metadata or create a simple SKILL.md file
           const skillContent = (skill.metadata as any)?.content || `# ${skill.displayName}\n\n${skill.description || ""}\n\nCategory: ${skill.category || "Unknown"}\nAuthor: ${skill.author || "Unknown"}\nSource: ${skill.sourceUrl || "N/A"}`;
           
-          const result = await docker.installSkillToInstance(
+          const result = await k8s.installSkillToInstance(
             input.instanceId.toString(),
             skill.name,
             skillContent
@@ -554,14 +536,6 @@ export const appRouter = router({
 
           if (!result.success) {
             throw new Error(result.error || "Failed to install skill");
-          }
-
-          // Restart container to apply skills
-          const instance = await db.getInstanceById(input.instanceId);
-          if (instance && instance.status === "running") {
-            // Stop and start to reload skills
-            await docker.stopInstance(input.instanceId.toString());
-            await docker.startInstance(input.instanceId.toString());
           }
 
           // Mark as installed
@@ -625,7 +599,7 @@ export const appRouter = router({
             throw new Error("Skill not found");
           }
 
-          const result = await docker.removeSkillFromInstance(
+          const result = await k8s.removeSkillFromInstance(
             input.instanceId.toString(),
             skill.name
           );
