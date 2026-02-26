@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { CHAT_MESSAGE_COST, INSUFFICIENT_CREDITS_MSG, MODELS, type ModelId } from "@shared/const";
 import * as db from "./db";
-import { readGatewayToken } from "./docker";
+import { readGatewayToken, getPodIp } from "./kubernetes";
 
 export type ChatHistoryMessage = {
   role: "user" | "assistant" | "system";
@@ -36,8 +36,10 @@ export async function handleChatRequest({
     throw new TRPCError({ code: "BAD_REQUEST", message: "Instance is not running" });
   }
 
-  if (!instance.port) {
-    throw new TRPCError({ code: "BAD_REQUEST", message: "Instance port not configured" });
+  // Resolve pod IP for the running K8s instance
+  const podIp = await getPodIp(instance.id.toString());
+  if (!podIp) {
+    throw new TRPCError({ code: "BAD_REQUEST", message: "Instance pod is not reachable" });
   }
 
   // Resolve model config
@@ -63,8 +65,8 @@ export async function handleChatRequest({
   // Get gateway token from config file
   const gatewayToken = await readGatewayToken(instanceId.toString()) ?? "";
 
-  // Call OpenClaw Gateway OpenAI-compatible Chat Completions endpoint.
-  const gatewayUrl = `http://localhost:${instance.port}/v1/chat/completions`;
+  // Call OpenClaw Gateway OpenAI-compatible Chat Completions endpoint via pod IP.
+  const gatewayUrl = `http://${podIp}:18789/v1/chat/completions`;
   const messages = [...(history || []), { role: "user", content: message }];
 
   let fetchResponse: Response;

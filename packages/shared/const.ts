@@ -6,9 +6,9 @@ export const NOT_ADMIN_ERR_MSG = 'You do not have required permission (10002)';
 
 // Credit system constants (values stored as tenths — 1 stored unit = 0.1 display credits)
 export const CREDIT_DIVISOR = 10;
-export const CHAT_MESSAGE_COST = 1;      // 0.1 display credits per message
-export const INSTANCE_DAILY_COST = 50;   // 5.0 display credits per day
-export const LOW_CREDIT_THRESHOLD = 50;  // 5.0 display credits — warn user
+export const CHAT_MESSAGE_COST = 2;      // 0.2 display credits per message (premium default)
+export const INSTANCE_DAILY_COST = 75;   // 7.5 display credits per day
+export const LOW_CREDIT_THRESHOLD = 75;  // 7.5 display credits — warn user
 export const INSUFFICIENT_CREDITS_MSG = 'Insufficient credits (10003)';
 
 // --- Plan system ---
@@ -25,8 +25,8 @@ export const PLANS: Record<PlanTier, PlanConfig> = {
   free: {
     name: 'free',
     displayName: 'Free',
-    dailyRefreshCredits: 3000, // refresh to 300.0 display credits
-    maxCredits: 3000,
+    dailyRefreshCredits: 20, // no daily refresh — free tier is a 7-day trial via welcome credits
+    maxCredits: 1250,
   },
   pro: {
     name: 'pro',
@@ -53,12 +53,12 @@ export const MODELS: Record<ModelId, ModelConfig> = {
     id: 'premium',
     displayName: 'Gemini 2.5 Flash',
     gatewayModel: 'openclaw:main',
-    creditCost: 1, // 0.1 display credits
+    creditCost: 2, // 0.2 display credits
   },
   cheap: {
     id: 'cheap',
     displayName: 'Step 3.5 Flash',
     gatewayModel: 'openclaw:flash',
-    creditCost: 1, // 0.1 display credits (same for now; gateway model is cheaper to run)
+    creditCost: 1, // 0.1 display credits (cheaper model, lower cost)
   },
 };

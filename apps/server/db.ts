@@ -473,7 +473,7 @@ export async function deleteSkillCollectionForUser(id: number, userId: number): 
 
 // ===== Credit Functions =====
 
-const DEFAULT_CREDITS = 500; // stored as tenths; 500 = 50.0 display credits
+const DEFAULT_CREDITS = 1250; // stored as tenths; 1250 = 125.0 display credits (~7 days trial)
 
 export async function getUserCredits(userId: number): Promise<number> {
   const db = await getDb();
